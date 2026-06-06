@@ -61,6 +61,12 @@ let activePayrollTab = 'dashboard';
 let activePayrollReport = 'summary';
 let currentPayrollPreview = null;
 
+// Hosting & Domains State Variables
+let hostingWebsites = [];
+let hostingDomains = [];
+let hostingServers = [];
+let activeHostingTab = 'dashboard';
+
 let authToken = localStorage.getItem('subpulse_auth_token') || null;
 let authIsRegisterMode = false;
 
@@ -192,6 +198,9 @@ async function initApp() {
       await fetchVehicles();
       await fetchLeases();
       await fetchPayrollRuns();
+      await fetchHostingWebsites();
+      await fetchHostingDomains();
+      await fetchHostingServers();
     } else {
       authToken = null;
       localStorage.removeItem('subpulse_auth_token');
@@ -311,6 +320,11 @@ function setupEventListeners() {
         viewSubtitle.textContent = 'Salary structures, monthly payroll runs, bank exports, and payslip archiving';
         calculateAndRenderPayrollMetrics();
         renderPayrollSubTab();
+      } else if (viewName === 'hosting') {
+        viewTitle.textContent = 'Websites, Domains & Hosting';
+        viewSubtitle.textContent = 'Pearls IT Infrastructure central management panel';
+        calculateAndRenderHostingMetrics();
+        renderHostingSubTab();
       }
     });
   });
@@ -1010,6 +1024,7 @@ function setupEventListeners() {
 
   setupLeasingEventListeners();
   setupPayrollEventListeners();
+  setupHostingEventListeners();
 }
 
 // Handle login/register submit
@@ -9166,3 +9181,930 @@ window.calculateAndRenderPayrollMetrics = calculateAndRenderPayrollMetrics;
 window.renderPayrollSubTab = renderPayrollSubTab;
 window.setupPayrollEventListeners = setupPayrollEventListeners;
 window.fetchPayrollRuns = fetchPayrollRuns;
+
+// --- MODULE 17 WEBSITES, DOMAINS & HOSTING MODULE ---
+
+async function fetchHostingWebsites() {
+  const data = await apiCall('/it/websites');
+  if (data) hostingWebsites = data;
+}
+
+async function fetchHostingDomains() {
+  const data = await apiCall('/it/domains');
+  if (data) hostingDomains = data;
+}
+
+async function fetchHostingServers() {
+  const data = await apiCall('/it/servers');
+  if (data) hostingServers = data;
+}
+
+function setupHostingEventListeners() {
+  // Tab buttons
+  const tabs = document.querySelectorAll('.hosting-tab-btn');
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.forEach(b => {
+        b.classList.remove('active');
+        b.style.background = 'transparent';
+        b.style.color = 'var(--color-text-muted)';
+      });
+      btn.classList.add('active');
+      btn.style.background = 'rgba(255,255,255,0.06)';
+      btn.style.color = '#fff';
+      activeHostingTab = btn.getAttribute('data-hosting-tab');
+      renderHostingSubTab();
+    });
+  });
+
+  // Website Modal bindings
+  document.getElementById('btn-add-website').addEventListener('click', () => openWebsiteModal());
+  document.getElementById('btn-close-website-modal').addEventListener('click', closeWebsiteModal);
+  document.getElementById('btn-cancel-website-modal').addEventListener('click', closeWebsiteModal);
+  document.getElementById('website-form').addEventListener('submit', handleWebsiteSubmit);
+
+  // Domain Modal bindings
+  document.getElementById('btn-add-domain').addEventListener('click', () => openDomainModal());
+  document.getElementById('btn-close-domain-modal').addEventListener('click', closeDomainModal);
+  document.getElementById('btn-cancel-domain-modal').addEventListener('click', closeDomainModal);
+  document.getElementById('domain-form').addEventListener('submit', handleDomainSubmit);
+
+  // Server Modal bindings
+  document.getElementById('btn-add-server').addEventListener('click', () => openServerModal());
+  document.getElementById('btn-close-server-modal').addEventListener('click', closeServerModal);
+  document.getElementById('btn-cancel-server-modal').addEventListener('click', closeServerModal);
+  document.getElementById('server-form').addEventListener('submit', handleServerSubmit);
+
+  // DNS modal close bindings
+  document.querySelectorAll('#btn-close-dns-modal, #btn-close-dns-modal-bottom').forEach(b => {
+    b.addEventListener('click', closeDnsModal);
+  });
+  document.getElementById('dns-record-add-form').addEventListener('submit', handleDnsRecordAddSubmit);
+
+  // SSH modal close bindings
+  document.querySelectorAll('#btn-close-ssh-modal, #btn-close-ssh-modal-bottom').forEach(b => {
+    b.addEventListener('click', closeSshModal);
+  });
+  document.getElementById('btn-copy-ssh-key').addEventListener('click', copySshKeyToClipboard);
+
+  // Live Ping simulation button
+  document.getElementById('btn-trigger-ping').addEventListener('click', () => {
+    runUptimePingSimulation(true);
+  });
+}
+
+function calculateAndRenderHostingMetrics() {
+  const simDate = systemStatus.simulatedDate || new Date().toISOString().substring(0, 10);
+
+  // Websites Online (UP vs Total)
+  const totalSites = hostingWebsites.length;
+  const upSites = hostingWebsites.filter(w => w.status === 'UP').length;
+  document.getElementById('hosting-stat-uptime').textContent = `${upSites} / ${totalSites}`;
+
+  // Domains expiring within 30 days
+  let expiringDomainsCount = 0;
+  let domainsAlerts = [];
+  hostingDomains.forEach(dom => {
+    if (dom.expiryDate) {
+      const daysLeft = getDaysDifferenceForInv(simDate, dom.expiryDate);
+      if (daysLeft >= 0 && daysLeft <= 30) {
+        expiringDomainsCount++;
+      }
+      // Alerts: 60/30/7 days
+      if (daysLeft >= 0 && daysLeft <= 60) {
+        let type = 'info';
+        if (daysLeft <= 7) type = 'danger';
+        else if (daysLeft <= 30) type = 'warning';
+        domainsAlerts.push({
+          subject: dom.domainName,
+          type: type,
+          message: `Domain <strong>${dom.domainName}</strong> expires in ${daysLeft} days (${dom.expiryDate}).`,
+          daysLeft: daysLeft
+        });
+      }
+    }
+  });
+  document.getElementById('hosting-stat-domain-expiry').textContent = expiringDomainsCount;
+
+  // Server renewals due within 30 days
+  let expiringServersCount = 0;
+  let serversAlerts = [];
+  hostingServers.forEach(srv => {
+    if (srv.renewalDate) {
+      const daysLeft = getDaysDifferenceForInv(simDate, srv.renewalDate);
+      if (daysLeft >= 0 && daysLeft <= 30) {
+        expiringServersCount++;
+      }
+      // Alerts: 60/30/7 days
+      if (daysLeft >= 0 && daysLeft <= 60) {
+        let type = 'info';
+        if (daysLeft <= 7) type = 'danger';
+        else if (daysLeft <= 30) type = 'warning';
+        serversAlerts.push({
+          subject: srv.name,
+          type: type,
+          message: `Hosting server <strong>${srv.name}</strong> renewal due in ${daysLeft} days (${srv.renewalDate}).`,
+          daysLeft: daysLeft
+        });
+      }
+    }
+  });
+  document.getElementById('hosting-stat-server-expiry').textContent = expiringServersCount;
+
+  // Total Monthly hosting cost = sum of servers + (domains / 12)
+  let totalServerCost = hostingServers.reduce((sum, s) => sum + parseFloat(s.monthlyCost || 0), 0);
+  let totalDomainCost = hostingDomains.reduce((sum, d) => sum + parseFloat(d.cost || 0), 0);
+  let monthlyCost = totalServerCost + (totalDomainCost / 12);
+  document.getElementById('hosting-stat-total-cost').textContent = `£${monthlyCost.toFixed(2)}`;
+
+  // Update alerts container
+  const alertsContainer = document.getElementById('hosting-alerts-container');
+  const allAlerts = [...domainsAlerts, ...serversAlerts].sort((a, b) => a.daysLeft - b.daysLeft);
+  
+  if (allAlerts.length === 0) {
+    alertsContainer.innerHTML = `<p class="text-muted" style="font-size: 13px; margin: 5px 0;">No active alerts. All systems operational and renewals up-to-date.</p>`;
+  } else {
+    alertsContainer.innerHTML = allAlerts.map(alert => {
+      let icon = 'fa-circle-info text-cyan';
+      let border = 'rgba(255,255,255,0.06)';
+      let bg = 'rgba(255,255,255,0.02)';
+      if (alert.type === 'danger') {
+        icon = 'fa-circle-exclamation text-red';
+        border = 'rgba(255, 75, 75, 0.2)';
+        bg = 'rgba(255, 75, 75, 0.05)';
+      } else if (alert.type === 'warning') {
+        icon = 'fa-triangle-exclamation text-amber';
+        border = 'rgba(255, 175, 0, 0.2)';
+        bg = 'rgba(255, 175, 0, 0.05)';
+      }
+      return `
+        <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 15px; border-radius: 6px; border: 1px solid ${border}; background: ${bg}; font-size: 13px;">
+          <i class="fa-solid ${icon}" style="margin-top: 2px;"></i>
+          <div style="flex: 1;">${alert.message}</div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function renderHostingSubTab() {
+  // Hide all panels
+  document.querySelectorAll('.hosting-panel').forEach(p => p.style.display = 'none');
+  
+  // Show active panel
+  document.getElementById(`hosting-panel-${activeHostingTab}`).style.display = 'block';
+
+  if (activeHostingTab === 'dashboard') {
+    renderHostingDashboard();
+  } else if (activeHostingTab === 'websites') {
+    renderHostingWebsites();
+  } else if (activeHostingTab === 'domains') {
+    renderHostingDomains();
+  } else if (activeHostingTab === 'servers') {
+    renderHostingServers();
+  }
+}
+
+function renderHostingDashboard() {
+  // Disk progress bars
+  const diskContainer = document.getElementById('hosting-disk-bars-container');
+  if (hostingServers.length === 0) {
+    diskContainer.innerHTML = '<p class="text-muted" style="font-size: 13px;">No servers configured.</p>';
+  } else {
+    diskContainer.innerHTML = hostingServers.map(srv => {
+      const disk = srv.diskUsage || 0;
+      let barColor = 'var(--accent-cyan)';
+      if (disk > 80) barColor = 'var(--accent-red)';
+      else if (disk > 60) barColor = 'var(--accent-amber)';
+      
+      return `
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size: 12px; font-weight:600; margin-bottom:5px;">
+            <span>${srv.name} (${srv.provider})</span>
+            <span>${disk}%</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); height:8px; border-radius:4px; overflow:hidden; border: 1px solid rgba(255,255,255,0.03);">
+            <div style="background: ${barColor}; width: ${disk}%; height:100%; border-radius:4px;"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Provider Distribution
+  const providerContainer = document.getElementById('hosting-providers-distribution');
+  let providersCount = {};
+  hostingServers.forEach(s => {
+    providersCount[s.provider] = (providersCount[s.provider] || 0) + 1;
+  });
+  const entries = Object.entries(providersCount);
+  if (entries.length === 0) {
+    providerContainer.innerHTML = '<p class="text-muted" style="font-size: 13px;">No provider data available.</p>';
+  } else {
+    const maxVal = Math.max(...entries.map(e => e[1]));
+    providerContainer.innerHTML = entries.map(([prov, cnt]) => {
+      const pct = Math.round((cnt / hostingServers.length) * 100);
+      return `
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:5px;">
+            <span>${prov}</span>
+            <span>${cnt} Server(s) (${pct}%)</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); height:6px; border-radius:3px; overflow:hidden; border: 1px solid rgba(255,255,255,0.03);">
+            <div style="background: var(--accent-purple); width: ${(cnt/maxVal)*100}%; height:100%; border-radius:3px;"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Run/Draw Latency Chart
+  runUptimePingSimulation(false);
+}
+
+let lastPingTimeData = [];
+
+function runUptimePingSimulation(isManual = false) {
+  const baseLatencies = {
+    "https://pearls-it.co.uk": 45,
+    "https://pearl-developers-limited.co.uk": 110,
+    "https://tracker.pearls-developers-limited.co.uk": 75,
+    "https://status.pearls-it.co.uk": 32,
+    "https://analytics.pearls-it.co.uk": 185,
+    "https://staging.pearls-it.co.uk": 220,
+    "https://docs.pearls-it.co.uk": 58
+  };
+
+  lastPingTimeData = hostingWebsites.map(site => {
+    const base = baseLatencies[site.url] || 100;
+    const isDown = site.status === 'DOWN';
+    const variation = isDown ? 0 : Math.round(base * (0.85 + Math.random() * 0.3));
+    return {
+      url: site.url.replace('https://', ''),
+      latency: variation,
+      status: isDown ? 'DOWN' : (variation > 200 ? 'SLOW' : 'UP')
+    };
+  });
+
+  const upPings = lastPingTimeData.filter(p => p.latency > 0);
+  const avgLatency = upPings.length > 0 ? Math.round(upPings.reduce((sum, p) => sum + p.latency, 0) / upPings.length) : 0;
+  
+  const avgEl = document.getElementById('avg-latency-txt');
+  const lastEl = document.getElementById('last-ping-txt');
+  if (avgEl) avgEl.textContent = `${avgLatency}ms`;
+  if (lastEl) lastEl.textContent = new Date().toLocaleTimeString();
+
+  if (isManual) {
+    showToast('Infrastructure ping completed successfully!', 'success');
+  }
+
+  drawManualCanvasChart(lastPingTimeData);
+}
+
+function drawManualCanvasChart(data) {
+  const canvas = document.getElementById('uptime-latency-chart');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+
+  const width = rect.width;
+  const height = rect.height;
+
+  ctx.clearRect(0, 0, width, height);
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+  ctx.lineWidth = 1;
+  const gridLines = 4;
+  for (let i = 0; i <= gridLines; i++) {
+    const y = 20 + ((height - 50) / gridLines) * i;
+    ctx.beginPath();
+    ctx.moveTo(45, y);
+    ctx.lineTo(width - 20, y);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.font = '10px Outfit, sans-serif';
+    ctx.textAlign = 'right';
+    const maxVal = 250;
+    const val = Math.round(maxVal - (maxVal / gridLines) * i);
+    ctx.fillText(`${val}ms`, 37, y + 4);
+  }
+
+  if (data.length === 0) return;
+
+  const chartWidth = width - 75;
+  const startX = 55;
+  const points = data.map((d, index) => {
+    const x = startX + (chartWidth / (data.length - 1)) * index;
+    const maxVal = 250;
+    const val = Math.min(d.latency, maxVal);
+    const y = height - 30 - ((height - 50) * (val / maxVal));
+    return { x, y, label: d.url, latency: d.latency, status: d.status };
+  });
+
+  const grad = ctx.createLinearGradient(0, 20, 0, height - 30);
+  grad.addColorStop(0, 'rgba(0, 240, 255, 0.15)');
+  grad.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
+
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, height - 30);
+  points.forEach(p => {
+    ctx.lineTo(p.x, p.y);
+  });
+  ctx.lineTo(points[points.length - 1].x, height - 30);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.8)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  points.forEach((p, index) => {
+    if (index === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  });
+  ctx.stroke();
+
+  points.forEach(p => {
+    ctx.beginPath();
+    let pointColor = '#00f0ff';
+    if (p.status === 'DOWN') pointColor = '#ff4b4b';
+    else if (p.status === 'SLOW') pointColor = '#ffaf00';
+
+    ctx.fillStyle = pointColor;
+    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#0e1017';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '9px Outfit, sans-serif';
+    ctx.textAlign = 'center';
+    
+    let displayLabel = p.label;
+    if (displayLabel.length > 12) displayLabel = displayLabel.substring(0, 10) + '..';
+    ctx.fillText(displayLabel, p.x, height - 12);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 9px Outfit, sans-serif';
+    ctx.fillText(p.latency > 0 ? `${p.latency}ms` : 'OFFLINE', p.x, p.y - 8);
+  });
+}
+
+function renderHostingWebsites() {
+  const tbody = document.getElementById('hosting-websites-tbody');
+  tbody.innerHTML = '';
+
+  if (hostingWebsites.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:20px;">No websites registered.</td></tr>`;
+    return;
+  }
+
+  hostingWebsites.forEach(web => {
+    const srv = hostingServers.find(s => s.id === web.serverId);
+    const dom = hostingDomains.find(d => d.id === web.domainId);
+
+    const srvName = srv ? `${srv.name} (${srv.ipAddress})` : '<span class="text-muted">None</span>';
+    const domName = dom ? dom.domainName : '<span class="text-muted">None</span>';
+
+    const statusBadge = web.status === 'UP' 
+      ? `<span class="badge badge-success" style="cursor:pointer;" onclick="toggleWebsiteStatus('${web.id}')"><i class="fa-solid fa-circle-arrow-up"></i> UP</span>`
+      : `<span class="badge badge-danger" style="cursor:pointer;" onclick="toggleWebsiteStatus('${web.id}')"><i class="fa-solid fa-circle-arrow-down"></i> DOWN</span>`;
+
+    tbody.innerHTML += `
+      <tr>
+        <td style="font-weight: 600;">
+          <a href="${web.url}" target="_blank" class="text-cyan" style="text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px; margin-right:5px;"></i> ${web.url}</a>
+        </td>
+        <td>${web.description || '-'}</td>
+        <td>
+          <span class="label" style="background: rgba(255,255,255,0.05); color:#fff; border: 1px solid rgba(255,255,255,0.1); border-radius:4px; padding:2px 6px; font-size:11px;">${web.cms}</span>
+          <span style="font-size: 11px; color: var(--color-text-muted); margin-left: 5px;">${web.techStack}</span>
+        </td>
+        <td>${srvName}</td>
+        <td>${domName}</td>
+        <td style="text-align: center;">${statusBadge}</td>
+        <td style="text-align: right;">
+          <button class="btn btn-secondary btn-sm" onclick="openWebsiteModal('${web.id}')" style="padding:4px 8px; font-size:11px;"><i class="fa-solid fa-pencil"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteWebsitePrompt('${web.id}')" style="padding:4px 8px; font-size:11px;"><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+async function toggleWebsiteStatus(id) {
+  const web = hostingWebsites.find(w => w.id === id);
+  if (!web) return;
+
+  const newStatus = web.status === 'UP' ? 'DOWN' : 'UP';
+  const res = await apiCall(`/it/websites/${id}`, 'PUT', { status: newStatus });
+  if (res) {
+    showToast(`Website status changed to ${newStatus}!`, 'success');
+    await fetchHostingWebsites();
+    calculateAndRenderHostingMetrics();
+    renderHostingSubTab();
+  }
+}
+
+function openWebsiteModal(id = null) {
+  const modal = document.getElementById('website-modal');
+  const form = document.getElementById('website-form');
+  const title = document.getElementById('website-modal-title');
+  form.reset();
+
+  const srvSelect = document.getElementById('website-server-id');
+  const domSelect = document.getElementById('website-domain-id');
+
+  srvSelect.innerHTML = '<option value="">-- Select Server --</option>' + 
+    hostingServers.map(s => `<option value="${s.id}">${s.name} (${s.ipAddress})</option>`).join('');
+
+  domSelect.innerHTML = '<option value="">-- Select Domain --</option>' + 
+    hostingDomains.map(d => `<option value="${d.id}">${d.domainName}</option>`).join('');
+
+  if (id) {
+    const web = hostingWebsites.find(w => w.id === id);
+    if (web) {
+      title.textContent = 'Edit Registered Website';
+      document.getElementById('website-id').value = web.id;
+      document.getElementById('website-url').value = web.url;
+      document.getElementById('website-description').value = web.description || '';
+      document.getElementById('website-cms').value = web.cms || 'Custom HTML';
+      document.getElementById('website-techstack').value = web.techStack || '';
+      document.getElementById('website-server-id').value = web.serverId || '';
+      document.getElementById('website-domain-id').value = web.domainId || '';
+      document.getElementById('website-status').value = web.status || 'UP';
+    }
+  } else {
+    title.textContent = 'Register Website';
+    document.getElementById('website-id').value = '';
+  }
+
+  modal.style.display = 'flex';
+  setTimeout(() => modal.classList.add('active'), 50);
+}
+
+function closeWebsiteModal() {
+  const modal = document.getElementById('website-modal');
+  modal.classList.remove('active');
+  setTimeout(() => modal.style.display = 'none', 300);
+}
+
+async function handleWebsiteSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('website-id').value;
+  const payload = {
+    url: document.getElementById('website-url').value,
+    description: document.getElementById('website-description').value,
+    cms: document.getElementById('website-cms').value,
+    techStack: document.getElementById('website-techstack').value,
+    serverId: document.getElementById('website-server-id').value,
+    domainId: document.getElementById('website-domain-id').value,
+    status: document.getElementById('website-status').value
+  };
+
+  let res;
+  if (id) {
+    res = await apiCall(`/it/websites/${id}`, 'PUT', payload);
+  } else {
+    res = await apiCall('/it/websites', 'POST', payload);
+  }
+
+  if (res) {
+    showToast(id ? 'Website updated successfully!' : 'Website registered successfully!', 'success');
+    closeWebsiteModal();
+    await fetchHostingWebsites();
+    calculateAndRenderHostingMetrics();
+    renderHostingSubTab();
+  }
+}
+
+async function deleteWebsitePrompt(id) {
+  if (confirm('Are you sure you want to delete this website registration?')) {
+    const res = await apiCall(`/it/websites/${id}`, 'DELETE');
+    if (res) {
+      showToast('Website registration deleted.', 'success');
+      await fetchHostingWebsites();
+      calculateAndRenderHostingMetrics();
+      renderHostingSubTab();
+    }
+  }
+}
+
+function renderHostingDomains() {
+  const tbody = document.getElementById('hosting-domains-tbody');
+  tbody.innerHTML = '';
+
+  if (hostingDomains.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:20px;">No domains registered.</td></tr>`;
+    return;
+  }
+
+  hostingDomains.forEach(dom => {
+    const renewBadge = dom.autoRenewal 
+      ? '<span class="badge badge-success"><i class="fa-solid fa-arrows-spin"></i> Active</span>' 
+      : '<span class="badge badge-secondary"><i class="fa-solid fa-ban"></i> Disabled</span>';
+
+    const dnsCount = (dom.dnsRecords || []).length;
+
+    tbody.innerHTML += `
+      <tr>
+        <td style="font-weight: 600; color: #fff;">${dom.domainName}</td>
+        <td>${dom.registrar || '-'}</td>
+        <td><i class="fa-regular fa-calendar" style="margin-right:5px; font-size:11px;"></i> ${dom.expiryDate || '-'}</td>
+        <td style="text-align: center;">${renewBadge}</td>
+        <td>£${parseFloat(dom.cost || 0).toFixed(2)}</td>
+        <td style="text-align: center;">
+          <button class="btn btn-secondary btn-sm" onclick="openDnsModal('${dom.id}')" style="padding: 4px 10px; font-size: 11px;">
+            <i class="fa-solid fa-network-wired text-amber"></i> ${dnsCount} Record(s)
+          </button>
+        </td>
+        <td style="text-align: right;">
+          <button class="btn btn-secondary btn-sm" onclick="openDomainModal('${dom.id}')" style="padding:4px 8px; font-size:11px;"><i class="fa-solid fa-pencil"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteDomainPrompt('${dom.id}')" style="padding:4px 8px; font-size:11px;"><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function openDomainModal(id = null) {
+  const modal = document.getElementById('domain-modal');
+  const form = document.getElementById('domain-form');
+  const title = document.getElementById('domain-modal-title');
+  form.reset();
+
+  if (id) {
+    const dom = hostingDomains.find(d => d.id === id);
+    if (dom) {
+      title.textContent = 'Edit Registered Domain';
+      document.getElementById('domain-id').value = dom.id;
+      document.getElementById('domain-name').value = dom.domainName;
+      document.getElementById('domain-registrar').value = dom.registrar || '';
+      document.getElementById('domain-expiry').value = dom.expiryDate || '';
+      document.getElementById('domain-cost').value = dom.cost || 0.0;
+      document.getElementById('domain-autorenew').checked = !!dom.autoRenewal;
+    }
+  } else {
+    title.textContent = 'Register Domain';
+    document.getElementById('domain-id').value = '';
+  }
+
+  modal.style.display = 'flex';
+  setTimeout(() => modal.classList.add('active'), 50);
+}
+
+function closeDomainModal() {
+  const modal = document.getElementById('domain-modal');
+  modal.classList.remove('active');
+  setTimeout(() => modal.style.display = 'none', 300);
+}
+
+async function handleDomainSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('domain-id').value;
+  const payload = {
+    domainName: document.getElementById('domain-name').value,
+    registrar: document.getElementById('domain-registrar').value,
+    expiryDate: document.getElementById('domain-expiry').value,
+    cost: parseFloat(document.getElementById('domain-cost').value) || 0.0,
+    autoRenewal: document.getElementById('domain-autorenew').checked
+  };
+
+  let res;
+  if (id) {
+    res = await apiCall(`/it/domains/${id}`, 'PUT', payload);
+  } else {
+    res = await apiCall('/it/domains', 'POST', payload);
+  }
+
+  if (res) {
+    showToast(id ? 'Domain updated successfully!' : 'Domain registered successfully!', 'success');
+    closeDomainModal();
+    await fetchHostingDomains();
+    calculateAndRenderHostingMetrics();
+    renderHostingSubTab();
+  }
+}
+
+async function deleteDomainPrompt(id) {
+  if (confirm('Are you sure you want to delete this domain? This will also remove its associated DNS records.')) {
+    const res = await apiCall(`/it/domains/${id}`, 'DELETE');
+    if (res) {
+      showToast('Domain record deleted.', 'success');
+      await fetchHostingDomains();
+      calculateAndRenderHostingMetrics();
+      renderHostingSubTab();
+    }
+  }
+}
+
+function renderHostingServers() {
+  const tbody = document.getElementById('hosting-servers-tbody');
+  tbody.innerHTML = '';
+
+  if (hostingServers.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding:20px;">No servers registered.</td></tr>`;
+    return;
+  }
+
+  hostingServers.forEach(srv => {
+    const disk = srv.diskUsage || 0;
+    let barColor = 'var(--accent-cyan)';
+    if (disk > 80) barColor = 'var(--accent-red)';
+    else if (disk > 60) barColor = 'var(--accent-amber)';
+
+    tbody.innerHTML += `
+      <tr>
+        <td style="font-weight: 600;">
+          ${srv.controlPanelUrl 
+            ? `<a href="${srv.controlPanelUrl}" target="_blank" class="text-purple" style="text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px; margin-right:5px;"></i> ${srv.name}</a>` 
+            : srv.name}
+        </td>
+        <td>
+          <span style="font-weight:600; color:#fff;">${srv.provider}</span>
+          <span style="font-size:11px; color:var(--color-text-muted); display:block;">${srv.specs}</span>
+        </td>
+        <td style="font-family: monospace;">${srv.ipAddress}</td>
+        <td>
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--color-text-muted); margin-bottom:3px;">
+            <span>Usage</span>
+            <span>${disk}%</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); height:6px; border-radius:3px; overflow:hidden; border:1px solid rgba(255,255,255,0.03);">
+            <div style="background:${barColor}; width:${disk}%; height:100%;"></div>
+          </div>
+        </td>
+        <td><i class="fa-regular fa-calendar" style="margin-right:5px; font-size:11px;"></i> ${srv.renewalDate || '-'}</td>
+        <td>£${parseFloat(srv.monthlyCost || 0).toFixed(2)}</td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="revealSshKey('${srv.id}')" style="padding: 4px 8px; font-size:11px; background: rgba(155, 89, 182, 0.15); border: 1px solid rgba(155, 89, 182, 0.3); color: var(--accent-purple);">
+            <i class="fa-solid fa-key"></i> Reveal SSH
+          </button>
+        </td>
+        <td style="text-align: right;">
+          <button class="btn btn-secondary btn-sm" onclick="openServerModal('${srv.id}')" style="padding:4px 8px; font-size:11px;"><i class="fa-solid fa-pencil"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteServerPrompt('${srv.id}')" style="padding:4px 8px; font-size:11px;"><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function openServerModal(id = null) {
+  const modal = document.getElementById('server-modal');
+  const form = document.getElementById('server-form');
+  const title = document.getElementById('server-modal-title');
+  form.reset();
+
+  if (id) {
+    const srv = hostingServers.find(s => s.id === id);
+    if (srv) {
+      title.textContent = 'Edit Hosting Server';
+      document.getElementById('server-id').value = srv.id;
+      document.getElementById('server-name').value = srv.name;
+      document.getElementById('server-provider').value = srv.provider || '';
+      document.getElementById('server-ip').value = srv.ipAddress;
+      document.getElementById('server-specs').value = srv.specs || '';
+      document.getElementById('server-disk').value = srv.diskUsage || 0;
+      document.getElementById('server-cost').value = srv.monthlyCost || 0.0;
+      document.getElementById('server-renewal').value = srv.renewalDate || '';
+      document.getElementById('server-controlpanel').value = srv.controlPanelUrl || '';
+      document.getElementById('server-ssh-username').value = srv.sshDetails?.username || 'root';
+      document.getElementById('server-ssh-port').value = srv.sshDetails?.port || 22;
+      document.getElementById('server-ssh-key').value = '';
+      document.getElementById('server-ssh-key').placeholder = 'Leave blank to keep existing SSH key...';
+    }
+  } else {
+    title.textContent = 'Register Hosting Server';
+    document.getElementById('server-id').value = '';
+    document.getElementById('server-ssh-key').placeholder = 'Paste SSH private key here...';
+  }
+
+  modal.style.display = 'flex';
+  setTimeout(() => modal.classList.add('active'), 50);
+}
+
+function closeServerModal() {
+  const modal = document.getElementById('server-modal');
+  modal.classList.remove('active');
+  setTimeout(() => modal.style.display = 'none', 300);
+}
+
+async function handleServerSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('server-id').value;
+  const username = document.getElementById('server-ssh-username').value || 'root';
+  const port = parseInt(document.getElementById('server-ssh-port').value) || 22;
+  const plainKey = document.getElementById('server-ssh-key').value;
+
+  const payload = {
+    name: document.getElementById('server-name').value,
+    provider: document.getElementById('server-provider').value,
+    ipAddress: document.getElementById('server-ip').value,
+    specs: document.getElementById('server-specs').value,
+    diskUsage: parseInt(document.getElementById('server-disk').value) || 0,
+    monthlyCost: parseFloat(document.getElementById('server-cost').value) || 0.0,
+    renewalDate: document.getElementById('server-renewal').value,
+    controlPanelUrl: document.getElementById('server-controlpanel').value,
+    sshDetails: {
+      username,
+      port
+    }
+  };
+
+  if (plainKey.trim()) {
+    payload.sshDetails.encryptedKey = btoa(plainKey);
+  }
+
+  let res;
+  if (id) {
+    res = await apiCall(`/it/servers/${id}`, 'PUT', payload);
+  } else {
+    res = await apiCall('/it/servers', 'POST', payload);
+  }
+
+  if (res) {
+    showToast(id ? 'Server updated successfully!' : 'Server registered successfully!', 'success');
+    closeServerModal();
+    await fetchHostingServers();
+    calculateAndRenderHostingMetrics();
+    renderHostingSubTab();
+  }
+}
+
+async function deleteServerPrompt(id) {
+  if (confirm('Are you sure you want to delete this server from registry?')) {
+    const res = await apiCall(`/it/servers/${id}`, 'DELETE');
+    if (res) {
+      showToast('Server record deleted.', 'success');
+      await fetchHostingServers();
+      calculateAndRenderHostingMetrics();
+      renderHostingSubTab();
+    }
+  }
+}
+
+let activeDnsDomainId = null;
+
+function openDnsModal(domainId) {
+  activeDnsDomainId = domainId;
+  const dom = hostingDomains.find(d => d.id === domainId);
+  if (!dom) return;
+
+  document.getElementById('dns-modal-domain-title').textContent = `Manage DNS Records for ${dom.domainName}`;
+  renderDnsRecordsList(dom);
+
+  const modal = document.getElementById('dns-records-modal');
+  modal.style.display = 'flex';
+  setTimeout(() => modal.classList.add('active'), 50);
+}
+
+function closeDnsModal() {
+  const modal = document.getElementById('dns-records-modal');
+  modal.classList.remove('active');
+  setTimeout(() => modal.style.display = 'none', 300);
+}
+
+function renderDnsRecordsList(dom) {
+  const tbody = document.getElementById('dns-records-list-tbody');
+  tbody.innerHTML = '';
+
+  const records = dom.dnsRecords || [];
+  if (records.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding:15px;">No DNS records configured.</td></tr>`;
+    return;
+  }
+
+  records.forEach((rec, idx) => {
+    tbody.innerHTML += `
+      <tr>
+        <td style="font-weight:600;"><span class="label" style="background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:3px;">${rec.type}</span></td>
+        <td style="font-family:monospace; color:#fff;">${rec.host}</td>
+        <td style="font-family:monospace; font-size:11px; max-width: 200px; word-break: break-all;">${rec.value}</td>
+        <td>${rec.ttl}</td>
+        <td style="text-align: right;">
+          <button type="button" class="btn btn-danger btn-sm" onclick="deleteDnsRecord(${idx})" style="padding:2px 6px; font-size:10px;"><i class="fa-solid fa-trash-can"></i></button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+async function handleDnsRecordAddSubmit(e) {
+  e.preventDefault();
+  if (!activeDnsDomainId) return;
+
+  const dom = hostingDomains.find(d => d.id === activeDnsDomainId);
+  if (!dom) return;
+
+  const type = document.getElementById('dns-type').value;
+  const host = document.getElementById('dns-host').value;
+  const value = document.getElementById('dns-value').value;
+  const ttl = parseInt(document.getElementById('dns-ttl').value) || 3600;
+
+  const newRec = { type, host, value, ttl };
+  const records = dom.dnsRecords || [];
+  records.push(newRec);
+
+  const res = await apiCall(`/it/domains/${activeDnsDomainId}`, 'PUT', { dnsRecords: records });
+  if (res) {
+    showToast('DNS record added successfully!', 'success');
+    document.getElementById('dns-record-add-form').reset();
+    document.getElementById('dns-ttl').value = "3600";
+    await fetchHostingDomains();
+    renderDnsRecordsList(res);
+  }
+}
+
+async function deleteDnsRecord(index) {
+  if (!activeDnsDomainId) return;
+
+  const dom = hostingDomains.find(d => d.id === activeDnsDomainId);
+  if (!dom) return;
+
+  if (confirm('Are you sure you want to delete this DNS record?')) {
+    const records = dom.dnsRecords || [];
+    records.splice(index, 1);
+
+    const res = await apiCall(`/it/domains/${activeDnsDomainId}`, 'PUT', { dnsRecords: records });
+    if (res) {
+      showToast('DNS record removed.', 'success');
+      await fetchHostingDomains();
+      renderDnsRecordsList(res);
+    }
+  }
+}
+
+function revealSshKey(id) {
+  const srv = hostingServers.find(s => s.id === id);
+  if (!srv) return;
+
+  const username = srv.sshDetails?.username || 'root';
+  const port = srv.sshDetails?.port || 22;
+  const encryptedKey = srv.sshDetails?.encryptedKey || '';
+
+  let decryptedKey = 'No private key stored.';
+  if (encryptedKey) {
+    try {
+      decryptedKey = atob(encryptedKey);
+    } catch (e) {
+      decryptedKey = 'Failed to decrypt key: ' + e.message;
+    }
+  }
+
+  document.getElementById('ssh-modal-server-name').textContent = srv.name;
+  document.getElementById('ssh-modal-cmd').textContent = `ssh ${username}@${srv.ipAddress} -p ${port}`;
+  document.getElementById('ssh-decrypted-key-display').value = decryptedKey;
+
+  const modal = document.getElementById('ssh-key-modal');
+  modal.style.display = 'flex';
+  setTimeout(() => modal.classList.add('active'), 50);
+}
+
+function closeSshModal() {
+  const modal = document.getElementById('ssh-key-modal');
+  modal.classList.remove('active');
+  setTimeout(() => modal.style.display = 'none', 300);
+}
+
+function copySshKeyToClipboard() {
+  const text = document.getElementById('ssh-decrypted-key-display').value;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('SSH Credentials copied to clipboard!', 'success');
+  }).catch(err => {
+    showToast('Failed to copy: ' + err.message, 'error');
+  });
+}
+
+// Expose hosting handlers to window
+window.fetchHostingWebsites = fetchHostingWebsites;
+window.fetchHostingDomains = fetchHostingDomains;
+window.fetchHostingServers = fetchHostingServers;
+window.setupHostingEventListeners = setupHostingEventListeners;
+window.calculateAndRenderHostingMetrics = calculateAndRenderHostingMetrics;
+window.renderHostingSubTab = renderHostingSubTab;
+window.toggleWebsiteStatus = toggleWebsiteStatus;
+window.openWebsiteModal = openWebsiteModal;
+window.closeWebsiteModal = closeWebsiteModal;
+window.deleteWebsitePrompt = deleteWebsitePrompt;
+window.openDomainModal = openDomainModal;
+window.closeDomainModal = closeDomainModal;
+window.deleteDomainPrompt = deleteDomainPrompt;
+window.openServerModal = openServerModal;
+window.closeServerModal = closeServerModal;
+window.deleteServerPrompt = deleteServerPrompt;
+window.revealSshKey = revealSshKey;
+window.closeSshModal = closeSshModal;
+window.copySshKeyToClipboard = copySshKeyToClipboard;
+window.openDnsModal = openDnsModal;
+window.closeDnsModal = closeDnsModal;
+window.deleteDnsRecord = deleteDnsRecord;

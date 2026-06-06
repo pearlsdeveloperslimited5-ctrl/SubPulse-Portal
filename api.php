@@ -2984,6 +2984,245 @@ if (preg_match('#^employees/([^/]+)/salary-structure$#', $route, $m)) {
     }
 }
 
+// --- MODULE 17 WEBSITES ENDPOINTS ---
+if ($route === 'it/websites') {
+    if (!isset($db['it_websites'])) {
+        $db['it_websites'] = [];
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        echo json_encode($db['it_websites']);
+        exit;
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $url = $body['url'] ?? '';
+        if (empty($url)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Website URL is required.']);
+            exit;
+        }
+        $newWeb = [
+            'id' => 'WEB-' . time() . rand(10, 99),
+            'url' => $url,
+            'description' => $body['description'] ?? '',
+            'cms' => $body['cms'] ?? '',
+            'techStack' => $body['techStack'] ?? '',
+            'serverId' => $body['serverId'] ?? '',
+            'domainId' => $body['domainId'] ?? '',
+            'status' => $body['status'] ?? 'UP'
+        ];
+        $db['it_websites'][] = $newWeb;
+        writeDb($dbFile, $db);
+        http_response_code(201);
+        echo json_encode($newWeb);
+        exit;
+    }
+}
+
+if (preg_match('#^it/websites/([^/]+)$#', $route, $m)) {
+    $id = $m[1];
+    if (!isset($db['it_websites'])) {
+        $db['it_websites'] = [];
+    }
+    $index = -1;
+    foreach ($db['it_websites'] as $idx => $item) {
+        if ($item['id'] === $id) {
+            $index = $idx;
+            break;
+        }
+    }
+    if ($index === -1) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Website not found.']);
+        exit;
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+        $item = $db['it_websites'][$index];
+        $updated = array_merge($item, [
+            'url' => $body['url'] ?? $item['url'],
+            'description' => $body['description'] ?? ($item['description'] ?? ''),
+            'cms' => $body['cms'] ?? ($item['cms'] ?? ''),
+            'techStack' => $body['techStack'] ?? ($item['techStack'] ?? ''),
+            'serverId' => $body['serverId'] ?? ($item['serverId'] ?? ''),
+            'domainId' => $body['domainId'] ?? ($item['domainId'] ?? ''),
+            'status' => $body['status'] ?? ($item['status'] ?? 'UP')
+        ]);
+        $db['it_websites'][$index] = $updated;
+        writeDb($dbFile, $db);
+        echo json_encode($updated);
+        exit;
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        array_splice($db['it_websites'], $index, 1);
+        writeDb($dbFile, $db);
+        echo json_encode(['success' => true]);
+        exit;
+    }
+}
+
+// --- MODULE 17 DOMAINS ENDPOINTS ---
+if ($route === 'it/domains') {
+    if (!isset($db['it_domains'])) {
+        $db['it_domains'] = [];
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        echo json_encode($db['it_domains']);
+        exit;
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $domainName = $body['domainName'] ?? '';
+        if (empty($domainName)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Domain name is required.']);
+            exit;
+        }
+        $newDom = [
+            'id' => 'DOM-' . time() . rand(10, 99),
+            'domainName' => $domainName,
+            'registrar' => $body['registrar'] ?? '',
+            'expiryDate' => $body['expiryDate'] ?? '',
+            'autoRenewal' => isset($body['autoRenewal']) ? (bool)$body['autoRenewal'] : true,
+            'cost' => isset($body['cost']) ? floatval($body['cost']) : 0.0,
+            'dnsRecords' => $body['dnsRecords'] ?? []
+        ];
+        $db['it_domains'][] = $newDom;
+        writeDb($dbFile, $db);
+        http_response_code(201);
+        echo json_encode($newDom);
+        exit;
+    }
+}
+
+if (preg_match('#^it/domains/([^/]+)$#', $route, $m)) {
+    $id = $m[1];
+    if (!isset($db['it_domains'])) {
+        $db['it_domains'] = [];
+    }
+    $index = -1;
+    foreach ($db['it_domains'] as $idx => $item) {
+        if ($item['id'] === $id) {
+            $index = $idx;
+            break;
+        }
+    }
+    if ($index === -1) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Domain not found.']);
+        exit;
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+        $item = $db['it_domains'][$index];
+        $updated = array_merge($item, [
+            'domainName' => $body['domainName'] ?? $item['domainName'],
+            'registrar' => $body['registrar'] ?? ($item['registrar'] ?? ''),
+            'expiryDate' => $body['expiryDate'] ?? ($item['expiryDate'] ?? ''),
+            'autoRenewal' => isset($body['autoRenewal']) ? (bool)$body['autoRenewal'] : ($item['autoRenewal'] ?? true),
+            'cost' => isset($body['cost']) ? floatval($body['cost']) : ($item['cost'] ?? 0.0),
+            'dnsRecords' => $body['dnsRecords'] ?? ($item['dnsRecords'] ?? [])
+        ]);
+        $db['it_domains'][$index] = $updated;
+        writeDb($dbFile, $db);
+        echo json_encode($updated);
+        exit;
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        array_splice($db['it_domains'], $index, 1);
+        writeDb($dbFile, $db);
+        echo json_encode(['success' => true]);
+        exit;
+    }
+}
+
+// --- MODULE 17 SERVERS ENDPOINTS ---
+if ($route === 'it/servers') {
+    if (!isset($db['it_servers'])) {
+        $db['it_servers'] = [];
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        echo json_encode($db['it_servers']);
+        exit;
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $name = $body['name'] ?? '';
+        if (empty($name)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Server name is required.']);
+            exit;
+        }
+        $newSrv = [
+            'id' => 'SRV-' . time() . rand(10, 99),
+            'name' => $name,
+            'provider' => $body['provider'] ?? '',
+            'ipAddress' => $body['ipAddress'] ?? '',
+            'specs' => $body['specs'] ?? '',
+            'diskUsage' => isset($body['diskUsage']) ? intval($body['diskUsage']) : 0,
+            'monthlyCost' => isset($body['monthlyCost']) ? floatval($body['monthlyCost']) : 0.0,
+            'renewalDate' => $body['renewalDate'] ?? '',
+            'controlPanelUrl' => $body['controlPanelUrl'] ?? '',
+            'sshDetails' => [
+                'username' => $body['sshDetails']['username'] ?? 'root',
+                'port' => isset($body['sshDetails']['port']) ? intval($body['sshDetails']['port']) : 22,
+                'encryptedKey' => $body['sshDetails']['encryptedKey'] ?? ''
+            ]
+        ];
+        $db['it_servers'][] = $newSrv;
+        writeDb($dbFile, $db);
+        http_response_code(201);
+        echo json_encode($newSrv);
+        exit;
+    }
+}
+
+if (preg_match('#^it/servers/([^/]+)$#', $route, $m)) {
+    $id = $m[1];
+    if (!isset($db['it_servers'])) {
+        $db['it_servers'] = [];
+    }
+    $index = -1;
+    foreach ($db['it_servers'] as $idx => $item) {
+        if ($item['id'] === $id) {
+            $index = $idx;
+            break;
+        }
+    }
+    if ($index === -1) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Server not found.']);
+        exit;
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+        $item = $db['it_servers'][$index];
+        $newSsh = $item['sshDetails'] ?? ['username' => 'root', 'port' => 22, 'encryptedKey' => ''];
+        if (isset($body['sshDetails'])) {
+            $newSsh = array_merge($newSsh, [
+                'username' => $body['sshDetails']['username'] ?? $newSsh['username'],
+                'port' => isset($body['sshDetails']['port']) ? intval($body['sshDetails']['port']) : $newSsh['port'],
+                'encryptedKey' => $body['sshDetails']['encryptedKey'] ?? $newSsh['encryptedKey']
+            ]);
+        }
+        $updated = array_merge($item, [
+            'name' => $body['name'] ?? $item['name'],
+            'provider' => $body['provider'] ?? ($item['provider'] ?? ''),
+            'ipAddress' => $body['ipAddress'] ?? ($item['ipAddress'] ?? ''),
+            'specs' => $body['specs'] ?? ($item['specs'] ?? ''),
+            'diskUsage' => isset($body['diskUsage']) ? intval($body['diskUsage']) : ($item['diskUsage'] ?? 0),
+            'monthlyCost' => isset($body['monthlyCost']) ? floatval($body['monthlyCost']) : ($item['monthlyCost'] ?? 0.0),
+            'renewalDate' => $body['renewalDate'] ?? ($item['renewalDate'] ?? ''),
+            'controlPanelUrl' => $body['controlPanelUrl'] ?? ($item['controlPanelUrl'] ?? ''),
+            'sshDetails' => $newSsh
+        ]);
+        $db['it_servers'][$index] = $updated;
+        writeDb($dbFile, $db);
+        echo json_encode($updated);
+        exit;
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        array_splice($db['it_servers'], $index, 1);
+        writeDb($dbFile, $db);
+        echo json_encode(['success' => true]);
+        exit;
+    }
+}
+
 http_response_code(404);
 echo json_encode(['error' => 'Route not found.']);
 exit;

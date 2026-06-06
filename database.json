@@ -1023,5 +1023,335 @@
       ]
     }
   ],
-  "payroll_runs": []
+  "payroll_runs": [],
+  "it_servers": [
+    {
+      "id": "SRV-101",
+      "name": "Primary Web Node 01",
+      "provider": "DigitalOcean",
+      "ipAddress": "185.151.30.22",
+      "specs": "4 GB RAM / 2 vCPUs",
+      "diskUsage": 45,
+      "monthlyCost": 20,
+      "renewalDate": "2026-06-25",
+      "controlPanelUrl": "https://panel.pearls-it.co.uk",
+      "sshDetails": {
+        "username": "deploy",
+        "port": 22,
+        "encryptedKey": "U2VjcmV0U1NIS2V5XzIwMjZfV2ViMDEh"
+      }
+    },
+    {
+      "id": "SRV-102",
+      "name": "Database Replica Server",
+      "provider": "AWS EC2",
+      "ipAddress": "54.210.40.115",
+      "specs": "16 GB RAM / 4 vCPUs",
+      "diskUsage": 68,
+      "monthlyCost": 80,
+      "renewalDate": "2026-07-02",
+      "controlPanelUrl": "https://aws.amazon.com",
+      "sshDetails": {
+        "username": "ubuntu",
+        "port": 22,
+        "encryptedKey": "RUMyX1Byb2RfUmVwbGljYV8yMDI2IQ=="
+      }
+    },
+    {
+      "id": "SRV-103",
+      "name": "Mail Node & Relay",
+      "provider": "Linode",
+      "ipAddress": "139.162.20.89",
+      "specs": "2 GB RAM / 1 vCPU",
+      "diskUsage": 30,
+      "monthlyCost": 10,
+      "renewalDate": "2026-06-18",
+      "controlPanelUrl": "https://linode.com",
+      "sshDetails": {
+        "username": "mailadmin",
+        "port": 22,
+        "encryptedKey": "TWFpbF9SZWxheV9MaW5vZGVfS2V5IQ=="
+      }
+    },
+    {
+      "id": "SRV-104",
+      "name": "Backup Storage Vault",
+      "provider": "Hetzner",
+      "ipAddress": "95.217.5.112",
+      "specs": "8 GB RAM / 4 vCPUs",
+      "diskUsage": 82,
+      "monthlyCost": 15,
+      "renewalDate": "2026-06-28",
+      "controlPanelUrl": "https://hetzner.com",
+      "sshDetails": {
+        "username": "backup_mgr",
+        "port": 22,
+        "encryptedKey": "SGV0em5lcl9TdG9yYWdlX1ZhdWx0X0tleSE="
+      }
+    },
+    {
+      "id": "SRV-105",
+      "name": "Staging Environment",
+      "provider": "Vultr",
+      "ipAddress": "144.202.60.45",
+      "specs": "4 GB RAM / 2 vCPUs",
+      "diskUsage": 55,
+      "monthlyCost": 20,
+      "renewalDate": "2026-07-10",
+      "controlPanelUrl": "https://vultr.com",
+      "sshDetails": {
+        "username": "staging_user",
+        "port": 22,
+        "encryptedKey": "VnVsdHJfU3RhZ2luZ19FbnZpcm9ubWVudF9LZXkh"
+      }
+    },
+    {
+      "id": "SRV-106",
+      "name": "Analytics & Logging Node",
+      "provider": "DigitalOcean",
+      "ipAddress": "185.151.30.50",
+      "specs": "8 GB RAM / 4 vCPUs",
+      "diskUsage": 75,
+      "monthlyCost": 40,
+      "renewalDate": "2026-06-12",
+      "controlPanelUrl": "https://panel.pearls-it.co.uk",
+      "sshDetails": {
+        "username": "logadmin",
+        "port": 22,
+        "encryptedKey": "TG9nTm9kZV9ET19TU0hLZXlfMjAyNiE="
+      }
+    },
+    {
+      "id": "SRV-107",
+      "name": "CI/CD Runner",
+      "provider": "Scaleway",
+      "ipAddress": "51.15.80.201",
+      "specs": "8 GB RAM / 4 vCPUs",
+      "diskUsage": 40,
+      "monthlyCost": 24,
+      "renewalDate": "2026-06-30",
+      "controlPanelUrl": "https://scaleway.com",
+      "sshDetails": {
+        "username": "gitlab_runner",
+        "port": 22,
+        "encryptedKey": "Q0lfQ0RfU2NhbGV3YXlfUnVubmVyX1NlY3JldCE="
+      }
+    }
+  ],
+  "it_domains": [
+    {
+      "id": "DOM-101",
+      "domainName": "pearls-it.co.uk",
+      "registrar": "Namecheap",
+      "expiryDate": "2026-10-15",
+      "autoRenewal": true,
+      "cost": 12.99,
+      "dnsRecords": [
+        {
+          "type": "A",
+          "host": "@",
+          "value": "185.151.30.22",
+          "ttl": 3600
+        },
+        {
+          "type": "MX",
+          "host": "@",
+          "value": "mail.pearls-it.co.uk (Priority: 10)",
+          "ttl": 14400
+        },
+        {
+          "type": "TXT",
+          "host": "@",
+          "value": "v=spf1 include:spf.namecheap.com ~all",
+          "ttl": 3600
+        }
+      ]
+    },
+    {
+      "id": "DOM-102",
+      "domainName": "pearl-developers-limited.co.uk",
+      "registrar": "GoDaddy",
+      "expiryDate": "2026-06-18",
+      "autoRenewal": true,
+      "cost": 14.99,
+      "dnsRecords": [
+        {
+          "type": "A",
+          "host": "@",
+          "value": "185.151.30.22",
+          "ttl": 3600
+        },
+        {
+          "type": "CNAME",
+          "host": "www",
+          "value": "pearl-developers-limited.co.uk",
+          "ttl": 3600
+        },
+        {
+          "type": "CNAME",
+          "host": "subpulse",
+          "value": "tracker.pearls-developers-limited.co.uk",
+          "ttl": 3600
+        }
+      ]
+    },
+    {
+      "id": "DOM-103",
+      "domainName": "subpulse-portal.com",
+      "registrar": "Google Domains",
+      "expiryDate": "2026-07-05",
+      "autoRenewal": true,
+      "cost": 12,
+      "dnsRecords": [
+        {
+          "type": "A",
+          "host": "@",
+          "value": "185.151.30.22",
+          "ttl": 3600
+        },
+        {
+          "type": "TXT",
+          "host": "@",
+          "value": "google-site-verification=abc123xyz",
+          "ttl": 3600
+        }
+      ]
+    },
+    {
+      "id": "DOM-104",
+      "domainName": "tracker-portal.net",
+      "registrar": "Domain.com",
+      "expiryDate": "2026-06-12",
+      "autoRenewal": false,
+      "cost": 15.99,
+      "dnsRecords": [
+        {
+          "type": "A",
+          "host": "@",
+          "value": "185.151.30.50",
+          "ttl": 3600
+        }
+      ]
+    },
+    {
+      "id": "DOM-105",
+      "domainName": "pearls-cdn.net",
+      "registrar": "Cloudflare",
+      "expiryDate": "2027-02-28",
+      "autoRenewal": true,
+      "cost": 10,
+      "dnsRecords": [
+        {
+          "type": "A",
+          "host": "@",
+          "value": "54.210.40.115",
+          "ttl": 3600
+        }
+      ]
+    },
+    {
+      "id": "DOM-106",
+      "domainName": "pearls-staging.org",
+      "registrar": "Namecheap",
+      "expiryDate": "2026-07-20",
+      "autoRenewal": true,
+      "cost": 8.99,
+      "dnsRecords": [
+        {
+          "type": "A",
+          "host": "@",
+          "value": "144.202.60.45",
+          "ttl": 3600
+        }
+      ]
+    },
+    {
+      "id": "DOM-107",
+      "domainName": "pearls-devs.io",
+      "registrar": "Namecheap",
+      "expiryDate": "2026-06-25",
+      "autoRenewal": true,
+      "cost": 35,
+      "dnsRecords": [
+        {
+          "type": "A",
+          "host": "@",
+          "value": "51.15.80.201",
+          "ttl": 3600
+        }
+      ]
+    }
+  ],
+  "it_websites": [
+    {
+      "id": "WEB-101",
+      "url": "https://pearls-it.co.uk",
+      "description": "Primary corporate website for IT consultancy",
+      "cms": "WordPress",
+      "techStack": "PHP, MySQL, Apache",
+      "serverId": "SRV-101",
+      "domainId": "DOM-101",
+      "status": "UP"
+    },
+    {
+      "id": "WEB-102",
+      "url": "https://pearl-developers-limited.co.uk",
+      "description": "Developers corporate website",
+      "cms": "Webflow",
+      "techStack": "Webflow Hosting",
+      "serverId": "SRV-101",
+      "domainId": "DOM-102",
+      "status": "UP"
+    },
+    {
+      "id": "WEB-103",
+      "url": "https://tracker.pearls-developers-limited.co.uk",
+      "description": "SubPulse portal app",
+      "cms": "Custom Node/PHP",
+      "techStack": "Node.js, PHP, MySQL",
+      "serverId": "SRV-101",
+      "domainId": "DOM-102",
+      "status": "UP"
+    },
+    {
+      "id": "WEB-104",
+      "url": "https://status.pearls-it.co.uk",
+      "description": "Status monitoring page",
+      "cms": "Custom HTML",
+      "techStack": "PHP",
+      "serverId": "SRV-103",
+      "domainId": "DOM-101",
+      "status": "UP"
+    },
+    {
+      "id": "WEB-105",
+      "url": "https://analytics.pearls-it.co.uk",
+      "description": "Analytics service dashboard",
+      "cms": "Custom Python",
+      "techStack": "Python, Django",
+      "serverId": "SRV-106",
+      "domainId": "DOM-101",
+      "status": "UP"
+    },
+    {
+      "id": "WEB-106",
+      "url": "https://staging.pearls-it.co.uk",
+      "description": "Client staging area",
+      "cms": "WordPress",
+      "techStack": "PHP, MySQL",
+      "serverId": "SRV-105",
+      "domainId": "DOM-106",
+      "status": "UP"
+    },
+    {
+      "id": "WEB-107",
+      "url": "https://docs.pearls-it.co.uk",
+      "description": "Documentation portal",
+      "cms": "Docusaurus",
+      "techStack": "Node.js",
+      "serverId": "SRV-101",
+      "domainId": "DOM-101",
+      "status": "UP"
+    }
+  ]
 }
