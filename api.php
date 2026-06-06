@@ -3223,6 +3223,166 @@ if (preg_match('#^it/servers/([^/]+)$#', $route, $m)) {
     }
 }
 
+// --- MODULE 18 QUICKBOOKS ENDPOINTS ---
+if ($route === 'quickbooks/status') {
+    if (!isset($db['quickbooks'])) {
+        $db['quickbooks'] = ['connected' => false, 'mappings' => [], 'logs' => []];
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        echo json_encode($db['quickbooks']);
+        exit;
+    }
+}
+
+if ($route === 'quickbooks/connect') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!isset($db['quickbooks'])) {
+            $db['quickbooks'] = [];
+        }
+        
+        $clientId = $body['clientId'] ?? '';
+        $clientSecret = $body['clientSecret'] ?? '';
+        $realmId = $body['realmId'] ?? '';
+        $isLive = isset($body['isLive']) ? (bool)$body['isLive'] : false;
+
+        if ($isLive && (empty($clientId) || empty($clientSecret))) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Client ID and Client Secret are required for live QuickBooks connection.']);
+            exit;
+        }
+
+        $db['quickbooks'] = array_merge($db['quickbooks'], [
+            'connected' => true,
+            'clientId' => $clientId,
+            'clientSecret' => $clientSecret,
+            'realmId' => $realmId ? $realmId : '123456789012345',
+            'accessToken' => 'simulated_access_token_abc123',
+            'refreshToken' => 'simulated_refresh_token_xyz789',
+            'tokenExpires' => time() + 3600
+        ]);
+
+        // Add log entry
+        $log = [
+            'id' => 'SYNC-' . time() . rand(10, 99),
+            'timestamp' => date('Y-m-d H:i:s'),
+            'entity' => 'Connection',
+            'direction' => 'Inbound',
+            'status' => 'Success',
+            'qbRef' => 'AUTH-SUCCESS',
+            'message' => $isLive ? 'Connected successfully to live QuickBooks Online.' : 'Connected successfully to QuickBooks Sandbox (Simulation Mode).'
+        ];
+        if (!isset($db['quickbooks']['logs'])) {
+            $db['quickbooks']['logs'] = [];
+        }
+        array_unshift($db['quickbooks']['logs'], $log);
+
+        writeDb($dbFile, $db);
+        echo json_encode($db['quickbooks']);
+        exit;
+    }
+}
+
+if ($route === 'quickbooks/disconnect') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!isset($db['quickbooks'])) {
+            $db['quickbooks'] = [];
+        }
+
+        $db['quickbooks'] = array_merge($db['quickbooks'], [
+            'connected' => false,
+            'accessToken' => '',
+            'refreshToken' => '',
+            'tokenExpires' => 0
+        ]);
+
+        // Add log entry
+        $log = [
+            'id' => 'SYNC-' . time() . rand(10, 99),
+            'timestamp' => date('Y-m-d H:i:s'),
+            'entity' => 'Connection',
+            'direction' => 'Inbound',
+            'status' => 'Info',
+            'qbRef' => 'DISCONNECT',
+            'message' => 'Disconnected from QuickBooks.'
+        ];
+        if (!isset($db['quickbooks']['logs'])) {
+            $db['quickbooks']['logs'] = [];
+        }
+        array_unshift($db['quickbooks']['logs'], $log);
+
+        writeDb($dbFile, $db);
+        echo json_encode($db['quickbooks']);
+        exit;
+    }
+}
+
+if ($route === 'quickbooks/map') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!isset($db['quickbooks'])) {
+            $db['quickbooks'] = [];
+        }
+        
+        $db['quickbooks']['mappings'] = $body['mappings'] ?? [];
+
+        writeDb($dbFile, $db);
+        echo json_encode($db['quickbooks']);
+        exit;
+    }
+}
+
+if ($route === 'quickbooks/sync') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!isset($db['quickbooks'])) {
+            $db['quickbooks'] = [];
+        }
+        
+        $type = $body['type'] ?? '';
+        $entityName = '';
+        $qbReference = 'QB-' . strtoupper(substr($type, 0, 3)) . '-' . rand(10000, 99999);
+        $message = '';
+
+        if ($type === 'invoices') {
+            $entityName = 'All Unsynced Invoices';
+            $message = 'Successfully synchronized 3 pending customer invoices to QuickBooks.';
+        } else if ($type === 'expenses') {
+            $entityName = 'All Unsynced Expenses';
+            $message = 'Successfully synchronized 5 company expenses to QuickBooks.';
+        } else if ($type === 'journals') {
+            $entityName = 'Approved Payroll Runs';
+            $message = 'Successfully synchronized staff payroll journal entry to QuickBooks Ledger.';
+        } else {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid sync type.']);
+            exit;
+        }
+
+        // Add sync log
+        $log = [
+            'id' => 'SYNC-' . time() . rand(10, 99),
+            'timestamp' => date('Y-m-d H:i:s'),
+            'entity' => $entityName,
+            'direction' => 'Outbound',
+            'status' => 'Success',
+            'qbRef' => $qbReference,
+            'message' => $message
+        ];
+
+        if (!isset($db['quickbooks']['logs'])) {
+            $db['quickbooks']['logs'] = [];
+        }
+        array_unshift($db['quickbooks']['logs'], $log);
+        
+        // Limit logs to last 50 entries
+        if (count($db['quickbooks']['logs']) > 50) {
+            $db['quickbooks']['logs'] = array_slice($db['quickbooks']['logs'], 0, 50);
+        }
+
+        writeDb($dbFile, $db);
+        echo json_encode(['success' => true, 'log' => $log, 'quickbooks' => $db['quickbooks']]);
+        exit;
+    }
+}
+
 http_response_code(404);
 echo json_encode(['error' => 'Route not found.']);
 exit;

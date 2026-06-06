@@ -1353,5 +1353,41 @@
       "domainId": "DOM-101",
       "status": "UP"
     }
-  ]
+  ],
+  "quickbooks": {
+    "connected": false,
+    "clientId": "",
+    "clientSecret": "",
+    "realmId": "",
+    "accessToken": "",
+    "refreshToken": "",
+    "tokenExpires": 0,
+    "mappings": {
+      "sales": "4000",
+      "expenses": "6000",
+      "wages": "7000",
+      "wages_payable": "2100",
+      "bank": "1200"
+    },
+    "logs": [
+      {
+        "id": "SYNC-101",
+        "timestamp": "2026-06-05 10:30:15",
+        "entity": "Invoice (INV-001)",
+        "direction": "Outbound",
+        "status": "Success",
+        "qbRef": "QB-INV-99234",
+        "message": "Invoice synced successfully."
+      },
+      {
+        "id": "SYNC-102",
+        "timestamp": "2026-06-05 10:32:45",
+        "entity": "Payroll Run (PR-2026-05)",
+        "direction": "Outbound",
+        "status": "Success",
+        "qbRef": "QB-JE-88310",
+        "message": "General Ledger Journal synced successfully."
+      }
+    ]
+  }
 }

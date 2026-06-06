@@ -67,6 +67,16 @@ let hostingDomains = [];
 let hostingServers = [];
 let activeHostingTab = 'dashboard';
 
+// QuickBooks Integration State Variables
+let quickbooksState = {
+  connected: false,
+  clientId: "",
+  clientSecret: "",
+  realmId: "",
+  mappings: {},
+  logs: []
+};
+
 let authToken = localStorage.getItem('subpulse_auth_token') || null;
 let authIsRegisterMode = false;
 
@@ -201,6 +211,7 @@ async function initApp() {
       await fetchHostingWebsites();
       await fetchHostingDomains();
       await fetchHostingServers();
+      await fetchQuickBooksStatus();
     } else {
       authToken = null;
       localStorage.removeItem('subpulse_auth_token');
@@ -1025,6 +1036,7 @@ function setupEventListeners() {
   setupLeasingEventListeners();
   setupPayrollEventListeners();
   setupHostingEventListeners();
+  setupQuickBooksEventListeners();
 }
 
 // Handle login/register submit
@@ -2727,6 +2739,8 @@ function renderAccountingSubTab() {
     renderFinancialReports();
   } else if (activeAccountingTab === 'coa') {
     renderChartOfAccounts();
+  } else if (activeAccountingTab === 'quickbooks') {
+    renderQuickBooksSubTab();
   }
 }
 
@@ -10108,3 +10122,272 @@ window.copySshKeyToClipboard = copySshKeyToClipboard;
 window.openDnsModal = openDnsModal;
 window.closeDnsModal = closeDnsModal;
 window.deleteDnsRecord = deleteDnsRecord;
+
+// --- MODULE 18 QUICKBOOKS SYNC MODULE ---
+
+async function fetchQuickBooksStatus() {
+  const data = await apiCall('/quickbooks/status');
+  if (data) {
+    quickbooksState = data;
+  }
+}
+
+function setupQuickBooksEventListeners() {
+  const modalBtn = document.getElementById('btn-qb-connect-modal');
+  if (modalBtn) {
+    modalBtn.addEventListener('click', openQuickBooksConfigModal);
+  }
+  
+  const closeBtn = document.getElementById('btn-close-qb-modal');
+  if (closeBtn) closeBtn.addEventListener('click', closeQuickBooksConfigModal);
+  
+  const cancelBtn = document.getElementById('btn-cancel-qb-modal');
+  if (cancelBtn) cancelBtn.addEventListener('click', closeQuickBooksConfigModal);
+  
+  const modeSelect = document.getElementById('qb-mode-select');
+  if (modeSelect) {
+    modeSelect.addEventListener('change', (e) => {
+      const fields = document.getElementById('qb-live-credentials-fields');
+      const submitBtn = document.getElementById('btn-submit-qb-config');
+      if (e.target.value === 'live') {
+        fields.style.display = 'flex';
+        submitBtn.textContent = 'Authorize & Sync Live';
+      } else {
+        fields.style.display = 'none';
+        submitBtn.textContent = 'Authorize & Connect';
+      }
+    });
+  }
+
+  const configForm = document.getElementById('qb-config-form');
+  if (configForm) configForm.addEventListener('submit', handleQuickBooksConfigSubmit);
+  
+  const mappingForm = document.getElementById('qb-mapping-form');
+  if (mappingForm) mappingForm.addEventListener('submit', handleQuickBooksMappingSubmit);
+
+  document.querySelectorAll('.qb-sync-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const type = btn.getAttribute('data-sync-type');
+      handleQuickBooksSyncTrigger(type, btn);
+    });
+  });
+}
+
+function renderQuickBooksSubTab() {
+  const isConnected = !!quickbooksState.connected;
+  
+  const statusCard = document.getElementById('qb-connection-status-card');
+  const statusIcon = document.getElementById('qb-status-icon');
+  const statusText = document.getElementById('qb-status-text');
+  const statusSub = document.getElementById('qb-status-sub');
+  const actionBtn = document.getElementById('btn-qb-connect-modal');
+  const infoDetails = document.getElementById('qb-info-details');
+
+  if (isConnected) {
+    if (statusCard) {
+      statusCard.style.borderColor = 'rgba(46, 204, 113, 0.2)';
+      statusCard.style.backgroundColor = 'rgba(46, 204, 113, 0.05)';
+    }
+    if (statusIcon) statusIcon.className = 'fa-solid fa-circle-check text-success';
+    if (statusText) statusText.textContent = 'Connected (Active)';
+    if (statusSub) statusSub.textContent = 'Successfully authenticated and ready to sync.';
+    if (actionBtn) {
+      actionBtn.innerHTML = '<i class="fa-solid fa-link-slash"></i> Disconnect';
+      actionBtn.className = 'btn btn-secondary btn-sm';
+      actionBtn.onclick = handleQuickBooksDisconnect;
+    }
+    
+    if (infoDetails) infoDetails.style.display = 'block';
+    const realmEl = document.getElementById('qb-realm-id');
+    const expiryEl = document.getElementById('qb-token-expiry');
+    if (realmEl) realmEl.textContent = quickbooksState.realmId || '123456789012345';
+    
+    const expiryDate = quickbooksState.tokenExpires 
+      ? new Date(quickbooksState.tokenExpires * 1000).toLocaleTimeString() 
+      : '1 Hour';
+    if (expiryEl) expiryEl.textContent = expiryDate;
+
+    document.querySelectorAll('.qb-sync-btn').forEach(btn => {
+      btn.removeAttribute('disabled');
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    });
+  } else {
+    if (statusCard) {
+      statusCard.style.borderColor = 'rgba(255, 75, 75, 0.2)';
+      statusCard.style.backgroundColor = 'rgba(255, 75, 75, 0.05)';
+    }
+    if (statusIcon) statusIcon.className = 'fa-solid fa-circle-exclamation text-red';
+    if (statusText) statusText.textContent = 'Disconnected';
+    if (statusSub) statusSub.textContent = 'Please connect to synchronize ledger entries.';
+    if (actionBtn) {
+      actionBtn.innerHTML = '<i class="fa-solid fa-link"></i> Connect';
+      actionBtn.className = 'btn btn-primary btn-sm';
+      actionBtn.onclick = () => openQuickBooksConfigModal();
+    }
+    
+    if (infoDetails) infoDetails.style.display = 'none';
+
+    document.querySelectorAll('.qb-sync-btn').forEach(btn => {
+      btn.setAttribute('disabled', 'true');
+      btn.style.opacity = '0.5';
+      btn.style.cursor = 'not-allowed';
+    });
+  }
+
+  if (quickbooksState.mappings) {
+    const maps = quickbooksState.mappings;
+    const salesEl = document.getElementById('qb-map-sales');
+    const wagesEl = document.getElementById('qb-map-wages');
+    const wagesPayEl = document.getElementById('qb-map-wages-payable');
+    const bankEl = document.getElementById('qb-map-bank');
+    const expEl = document.getElementById('qb-map-expenses');
+    if (maps.sales && salesEl) salesEl.value = maps.sales;
+    if (maps.wages && wagesEl) wagesEl.value = maps.wages;
+    if (maps.wages_payable && wagesPayEl) wagesPayEl.value = maps.wages_payable;
+    if (maps.bank && bankEl) bankEl.value = maps.bank;
+    if (maps.expenses && expEl) expEl.value = maps.expenses;
+  }
+
+  const tbody = document.getElementById('qb-logs-tbody');
+  if (tbody) {
+    tbody.innerHTML = '';
+    const logs = quickbooksState.logs || [];
+    if (logs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:15px;">No sync logs available.</td></tr>';
+    } else {
+      logs.forEach(log => {
+        const statusBadge = log.status === 'Success' 
+          ? '<span class="badge badge-success" style="font-size:10px;"><i class="fa-solid fa-circle-check"></i> Success</span>'
+          : (log.status === 'Info' 
+            ? '<span class="badge badge-secondary" style="font-size:10px;"><i class="fa-solid fa-circle-info"></i> Info</span>'
+            : '<span class="badge badge-danger" style="font-size:10px;"><i class="fa-solid fa-triangle-exclamation"></i> Fail</span>');
+
+        tbody.innerHTML += `
+          <tr>
+            <td>${log.timestamp}</td>
+            <td style="font-weight:600; color:#fff;">${log.entity}</td>
+            <td>${statusBadge}</td>
+            <td style="font-family:monospace; font-size:11px;">${log.qbRef}</td>
+            <td style="color:var(--color-text-muted); font-size:11px;">${log.message}</td>
+          </tr>
+        `;
+      });
+    }
+  }
+}
+
+function openQuickBooksConfigModal() {
+  const modal = document.getElementById('quickbooks-config-modal');
+  const form = document.getElementById('qb-config-form');
+  if (form) form.reset();
+  
+  const modeSel = document.getElementById('qb-mode-select');
+  const fields = document.getElementById('qb-live-credentials-fields');
+  const submitBtn = document.getElementById('btn-submit-qb-config');
+  if (modeSel) modeSel.value = 'simulated';
+  if (fields) fields.style.display = 'none';
+  if (submitBtn) submitBtn.textContent = 'Authorize & Connect';
+
+  if (modal) {
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 50);
+  }
+}
+
+function closeQuickBooksConfigModal() {
+  const modal = document.getElementById('quickbooks-config-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
+  }
+}
+
+async function handleQuickBooksConfigSubmit(e) {
+  e.preventDefault();
+  const mode = document.getElementById('qb-mode-select').value;
+  const isLive = mode === 'live';
+  
+  const clientId = document.getElementById('qb-client-id').value;
+  const clientSecret = document.getElementById('qb-client-secret').value;
+  const realmId = document.getElementById('qb-realm-input').value;
+
+  if (isLive && (!clientId || !clientSecret)) {
+    showToast('Client ID and Client Secret are required for live QuickBooks integration.', 'error');
+    return;
+  }
+
+  const payload = {
+    isLive,
+    clientId,
+    clientSecret,
+    realmId
+  };
+
+  showToast('Connecting to QuickBooks...', 'info');
+  const res = await apiCall('/quickbooks/connect', 'POST', payload);
+  if (res) {
+    quickbooksState = res;
+    showToast(isLive ? 'Live QuickBooks connected successfully!' : 'QuickBooks Sandbox connection simulation active!', 'success');
+    closeQuickBooksConfigModal();
+    renderQuickBooksSubTab();
+  }
+}
+
+async function handleQuickBooksDisconnect() {
+  if (confirm('Are you sure you want to disconnect from QuickBooks? Mappings will be preserved but active tokens will be cleared.')) {
+    const res = await apiCall('/quickbooks/disconnect', 'POST');
+    if (res) {
+      quickbooksState = res;
+      showToast('Successfully disconnected from QuickBooks.', 'success');
+      renderQuickBooksSubTab();
+    }
+  }
+}
+
+async function handleQuickBooksMappingSubmit(e) {
+  e.preventDefault();
+  const payload = {
+    mappings: {
+      sales: document.getElementById('qb-map-sales').value,
+      wages: document.getElementById('qb-map-wages').value,
+      wages_payable: document.getElementById('qb-map-wages-payable').value,
+      bank: document.getElementById('qb-map-bank').value,
+      expenses: document.getElementById('qb-map-expenses').value
+    }
+  };
+
+  const res = await apiCall('/quickbooks/map', 'POST', payload);
+  if (res) {
+    quickbooksState = res;
+    showToast('QuickBooks ledger mapping config saved.', 'success');
+    renderQuickBooksSubTab();
+  }
+}
+
+async function handleQuickBooksSyncTrigger(type, button) {
+  const originalHtml = button.innerHTML;
+  button.setAttribute('disabled', 'true');
+  button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:16px;"></i><span>Syncing...</span>';
+  
+  showToast(`Synchronizing ${type} to QuickBooks...`, 'info');
+
+  const res = await apiCall('/quickbooks/sync', 'POST', { type });
+  
+  button.removeAttribute('disabled');
+  button.innerHTML = originalHtml;
+
+  if (res && res.success) {
+    quickbooksState = res.quickbooks;
+    showToast(res.log.message, 'success');
+    renderQuickBooksSubTab();
+  }
+}
+
+// Expose QuickBooks handlers to window
+window.fetchQuickBooksStatus = fetchQuickBooksStatus;
+window.setupQuickBooksEventListeners = setupQuickBooksEventListeners;
+window.renderQuickBooksSubTab = renderQuickBooksSubTab;
+window.handleQuickBooksDisconnect = handleQuickBooksDisconnect;
+window.openQuickBooksConfigModal = openQuickBooksConfigModal;
+window.closeQuickBooksConfigModal = closeQuickBooksConfigModal;

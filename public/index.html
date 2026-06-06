@@ -511,6 +511,7 @@
             <button class="acc-tab-btn" data-tab="journals" style="background: transparent; border: none; padding: 8px 15px; border-radius: 6px; color: var(--color-text-muted); cursor: pointer; font-weight: 600; font-size: 12px; transition: all 0.2s;"><i class="fa-solid fa-book"></i> Journals</button>
             <button class="acc-tab-btn" data-tab="reports" style="background: transparent; border: none; padding: 8px 15px; border-radius: 6px; color: var(--color-text-muted); cursor: pointer; font-weight: 600; font-size: 12px; transition: all 0.2s;"><i class="fa-solid fa-chart-pie"></i> Reports</button>
             <button class="acc-tab-btn" data-tab="coa" style="background: transparent; border: none; padding: 8px 15px; border-radius: 6px; color: var(--color-text-muted); cursor: pointer; font-weight: 600; font-size: 12px; transition: all 0.2s;"><i class="fa-solid fa-list-ol"></i> Accounts</button>
+            <button class="acc-tab-btn" data-tab="quickbooks" style="background: transparent; border: none; padding: 8px 15px; border-radius: 6px; color: var(--color-text-muted); cursor: pointer; font-weight: 600; font-size: 12px; transition: all 0.2s;"><i class="fa-solid fa-arrows-spin"></i> QuickBooks Pearls IT</button>
           </div>
         </div>
 
@@ -868,6 +869,148 @@
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+
+        <!-- Tab 7: QuickBooks Synchronization -->
+        <div class="acc-panel" id="acc-panel-quickbooks" style="display: none;">
+          <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px;">
+            
+            <!-- Left Column: Connection & Mapping -->
+            <div style="display: flex; flex-direction: column; gap: 25px;">
+              <!-- Connection Card -->
+              <div class="glass-panel" style="padding: 20px;">
+                <h3 style="margin-top: 0; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+                  <i class="fa-solid fa-arrows-spin text-purple" style="margin-right: 8px;"></i> QuickBooks Integration Status
+                </h3>
+                
+                <div id="qb-connection-status-card" style="margin: 15px 0; padding: 15px; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(255, 75, 75, 0.2); background: rgba(255, 75, 75, 0.05);">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-circle-exclamation text-red" id="qb-status-icon" style="font-size: 20px;"></i>
+                    <div>
+                      <strong id="qb-status-text" style="font-size: 13px;">Disconnected</strong>
+                      <span id="qb-status-sub" style="display: block; font-size: 11px; color: var(--color-text-muted);">Please connect to synchronize ledger entries.</span>
+                    </div>
+                  </div>
+                  <button class="btn btn-primary btn-sm" id="btn-qb-connect-modal" style="padding: 6px 12px; font-size: 11px;"><i class="fa-solid fa-link"></i> Connect</button>
+                </div>
+
+                <div id="qb-info-details" style="display: none; font-size: 12px; margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 10px; color: var(--color-text-muted);">
+                  <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>QuickBooks Company (Realm ID):</span> <strong id="qb-realm-id" style="color:#fff;">-</strong></div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Authentication Scope:</span> <strong style="color:#fff;">Accounting &amp; Invoicing</strong></div>
+                  <div style="display:flex; justify-content:space-between;"><span>Access Token Expiry:</span> <strong id="qb-token-expiry" style="color:#fff;">-</strong></div>
+                </div>
+              </div>
+
+              <!-- Mappings Card -->
+              <div class="glass-panel" style="padding: 20px;">
+                <h3 style="margin-top: 0; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+                  <i class="fa-solid fa-list-ol text-cyan" style="margin-right: 8px;"></i> Account Category Mapping
+                </h3>
+                
+                <form id="qb-mapping-form" style="margin-top: 15px;">
+                  <p style="font-size: 11px; color: var(--color-text-muted); margin-bottom: 15px;">Map SubPulse standard accounts to corresponding categories inside your QuickBooks ledger.</p>
+                  
+                  <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight:600; display:block; margin-bottom:4px;">Sales &amp; Customer Invoices</label>
+                    <select id="qb-map-sales" required style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: var(--border-glass); border-radius: 6px; color:#fff; font-size:12px;">
+                      <option value="4000">4000 - Product Sales Revenue (Default)</option>
+                      <option value="4100">4100 - Service Income</option>
+                      <option value="4200">4200 - Support &amp; Maintenance Revenue</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight:600; display:block; margin-bottom:4px;">Wages &amp; Salaries Expense</label>
+                    <select id="qb-map-wages" required style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: var(--border-glass); border-radius: 6px; color:#fff; font-size:12px;">
+                      <option value="7000">7000 - Wages Expense (Default)</option>
+                      <option value="7100">7100 - Director Remuneration</option>
+                      <option value="7200">7200 - Subcontractor Cost</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight:600; display:block; margin-bottom:4px;">Wages Payable Liability</label>
+                    <select id="qb-map-wages-payable" required style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: var(--border-glass); border-radius: 6px; color:#fff; font-size:12px;">
+                      <option value="2100">2100 - Wages Payable (Default)</option>
+                      <option value="2200">2200 - Tax &amp; National Insurance Liability</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight:600; display:block; margin-bottom:4px;">Cash &amp; Bank Account</label>
+                    <select id="qb-map-bank" required style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: var(--border-glass); border-radius: 6px; color:#fff; font-size:12px;">
+                      <option value="1200">1200 - Bank Current Account (Default)</option>
+                      <option value="1210">1210 - Petty Cash</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="font-size: 11px; font-weight:600; display:block; margin-bottom:4px;">Expenses Account Mapping</label>
+                    <select id="qb-map-expenses" required style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: var(--border-glass); border-radius: 6px; color:#fff; font-size:12px;">
+                      <option value="6000">6000 - General Expenses (Default)</option>
+                      <option value="6100">6100 - Travel &amp; Subsistence</option>
+                      <option value="6200">6200 - Rent &amp; Rates</option>
+                      <option value="6300">6300 - IT Consumables &amp; Licenses</option>
+                    </select>
+                  </div>
+
+                  <button type="submit" class="btn btn-secondary btn-block" style="width: 100%; font-size: 12px; padding: 10px;"><i class="fa-solid fa-floppy-disk"></i> Save Mapping Configuration</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Right Column: Sync & Logs -->
+            <div style="display: flex; flex-direction: column; gap: 25px;">
+              <!-- Sync Commands panel -->
+              <div class="glass-panel" style="padding: 20px;">
+                <h3 style="margin-top: 0; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+                  <i class="fa-solid fa-arrows-rotate text-emerald" style="margin-right: 8px;"></i> Direct Sync Controls
+                </h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px;">
+                  <button type="button" class="btn btn-secondary qb-sync-btn" data-sync-type="invoices" disabled style="padding: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                    <i class="fa-solid fa-file-invoice" style="font-size: 24px; color: var(--accent-cyan);"></i>
+                    <span>Sync Invoices</span>
+                  </button>
+                  
+                  <button type="button" class="btn btn-secondary qb-sync-btn" data-sync-type="expenses" disabled style="padding: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                    <i class="fa-solid fa-receipt" style="font-size: 24px; color: var(--accent-amber);"></i>
+                    <span>Sync Expenses</span>
+                  </button>
+
+                  <button type="button" class="btn btn-secondary qb-sync-btn" data-sync-type="journals" disabled style="padding: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                    <i class="fa-solid fa-file-invoice-dollar" style="font-size: 24px; color: var(--accent-purple);"></i>
+                    <span>Sync Payroll Ledger</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Sync Logs Table -->
+              <div class="glass-panel" style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
+                <h3 style="margin-top: 0; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+                  <i class="fa-solid fa-clock-rotate-left text-amber" style="margin-right: 8px;"></i> Sync Transaction Logs
+                </h3>
+                
+                <div style="overflow-x: auto; flex: 1; margin-top: 15px; max-height: 400px; overflow-y: auto;">
+                  <table class="report-table" style="width: 100%; font-size: 12px;">
+                    <thead>
+                      <tr>
+                        <th>Timestamp</th>
+                        <th>Entity</th>
+                        <th>Status</th>
+                        <th>QuickBooks Ref</th>
+                        <th>Details</th>
+                      </tr>
+                    </thead>
+                    <tbody id="qb-logs-tbody">
+                      <!-- Loaded dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -5471,6 +5614,58 @@
       <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; margin-top: 15px;">
         <button type="button" class="btn btn-secondary" id="btn-copy-ssh-key"><i class="fa-solid fa-copy"></i> Copy Key</button>
         <button type="button" class="btn btn-primary" id="btn-close-ssh-modal-bottom">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QuickBooks Credentials Config Modal -->
+  <div class="modal-backdrop" id="quickbooks-config-modal">
+    <div class="modal-content glass-panel" style="width: 500px;">
+      <div class="modal-header">
+        <h2>QuickBooks Credentials Configuration</h2>
+        <button class="modal-close" id="btn-close-qb-modal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="qb-config-form">
+          <p style="font-size: 11px; color: var(--color-text-muted); margin-bottom: 15px;">
+            Configure your QuickBooks Online developer keys to enable a live sync. If you do not have developer keys, you can select the <strong>Simulated Sandbox Connection</strong> mode below.
+          </p>
+
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="qb-mode-select">Connection Mode</label>
+            <select id="qb-mode-select" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: var(--border-glass); border-radius: 6px; color:#fff; font-size:12px;">
+              <option value="simulated">Simulated Sandbox Connection (Recommended / No Setup Needed)</option>
+              <option value="live">Live QuickBooks Online API Connection</option>
+            </select>
+          </div>
+
+          <div id="qb-live-credentials-fields" style="display: none; flex-direction: column; gap: 12px; margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.06); padding-top: 15px;">
+            <div class="form-group">
+              <label for="qb-client-id">Client ID *</label>
+              <input type="text" id="qb-client-id" placeholder="Enter Client ID from Intuit Developer Portal" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: var(--border-glass); border-radius: 6px; color:#fff; font-size:12px;">
+            </div>
+
+            <div class="form-group">
+              <label for="qb-client-secret">Client Secret *</label>
+              <input type="password" id="qb-client-secret" placeholder="Enter Client Secret" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: var(--border-glass); border-radius: 6px; color:#fff; font-size:12px;">
+            </div>
+
+            <div class="form-group">
+              <label for="qb-realm-input">Realm ID / Company ID (Optional)</label>
+              <input type="text" id="qb-realm-input" placeholder="e.g. 123456789012345" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: var(--border-glass); border-radius: 6px; color:#fff; font-size:12px;">
+            </div>
+            
+            <div style="font-size: 10px; color: var(--color-text-muted); background: rgba(255,255,255,0.02); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.04); line-height: 1.4;">
+              <strong>Redirect URI configuration</strong>: In your Intuit Developer Portal, you must add the following Redirect URI under your App settings:<br>
+              <code style="color:var(--accent-cyan); font-family:monospace; display:block; margin-top:4px;">https://tracker.pearls-developers-limited.co.uk/api/quickbooks/callback</code>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; margin-top: 20px;">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-qb-modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit-qb-config">Authorize &amp; Connect</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
