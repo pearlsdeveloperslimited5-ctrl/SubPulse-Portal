@@ -1,0 +1,22 @@
+<IfModule mod_passenger.c>
+PassengerEnabled off
+</IfModule>
+
+RewriteEngine On
+
+# Pass Authorization header to PHP
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+
+# Route all /api/* requests to api.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/(.*)$ api.php?route=$1 [QSA,L]
+
+# Secure database and backend logic from public access
+<Files "database.json">
+    Require all denied
+</Files>
+<Files "backend.php">
+    Require all denied
+</Files>

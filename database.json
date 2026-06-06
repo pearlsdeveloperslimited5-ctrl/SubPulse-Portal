@@ -1,0 +1,900 @@
+{
+  "user": {
+    "username": "hammad",
+    "passwordHash": "52d700526e38ffb5de56f60ecc3e32c05e9de63bea1d1dd81ab7a4414f8b136f"
+  },
+  "subscriptions": [
+    {
+      "id": "1780492589",
+      "name": "UK Sim Card",
+      "cost": 14.99,
+      "currency": "€",
+      "billingCycle": "quarterly",
+      "lastPaymentDate": "2026-06-03",
+      "nextPaymentDate": "2026-09-03",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false,
+      "paymentAccount": "Hammad Account"
+    },
+    {
+      "id": "1780492713",
+      "name": "Microsoft 365 Business Premium",
+      "cost": 26.4,
+      "currency": "$",
+      "billingCycle": "monthly",
+      "lastPaymentDate": "2026-05-13",
+      "nextPaymentDate": "2026-06-13",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false,
+      "paymentAccount": "Hammad Account"
+    },
+    {
+      "id": "1780493233",
+      "name": "Domain (pearl-developers-limited.co.uk)",
+      "cost": 6.98,
+      "currency": "$",
+      "billingCycle": "yearly",
+      "lastPaymentDate": "2026-05-11",
+      "nextPaymentDate": "2027-05-11",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "paymentAccount": "Hammad Account",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false
+    },
+    {
+      "id": "1780493430",
+      "name": "Domain (pearls-developers.co.uk)",
+      "cost": 6.98,
+      "currency": "$",
+      "billingCycle": "yearly",
+      "lastPaymentDate": "2026-04-23",
+      "nextPaymentDate": "2027-04-23",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "paymentAccount": "Hammad Account",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false
+    },
+    {
+      "id": "1780493469",
+      "name": "Domain ( pearls-developers-limited.co.uk)",
+      "cost": 6.98,
+      "currency": "$",
+      "billingCycle": "yearly",
+      "lastPaymentDate": "2026-05-23",
+      "nextPaymentDate": "2027-05-23",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "paymentAccount": "Hammad Account",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false
+    },
+    {
+      "id": "1780493811",
+      "name": "VPS (Okna Kharkiv)",
+      "cost": 15,
+      "currency": "€",
+      "billingCycle": "monthly",
+      "lastPaymentDate": "2026-05-26",
+      "nextPaymentDate": "2026-06-26",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "paymentAccount": "Ehsan Khan Account",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false
+    },
+    {
+      "id": "1780493939",
+      "name": "VPS (Schmidt Viktor)",
+      "cost": 15,
+      "currency": "€",
+      "billingCycle": "monthly",
+      "lastPaymentDate": "2026-05-30",
+      "nextPaymentDate": "2026-06-30",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "paymentAccount": "Ehsan Khan Account",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false
+    },
+    {
+      "id": "1780494050",
+      "name": "Web Hosting (Pearls Developers)",
+      "cost": 5,
+      "currency": "€",
+      "billingCycle": "monthly",
+      "lastPaymentDate": "2026-05-09",
+      "nextPaymentDate": "2026-06-09",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "paymentAccount": "Ehsan Khan Account",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false
+    },
+    {
+      "id": "1780494228",
+      "name": "UK Company",
+      "cost": 50,
+      "currency": "£",
+      "billingCycle": "yearly",
+      "lastPaymentDate": "2026-05-07",
+      "nextPaymentDate": "2027-05-07",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "paymentAccount": "Ehsan Khan Account",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false
+    },
+    {
+      "id": "1780494275",
+      "name": "UK Virtual Address",
+      "cost": 120,
+      "currency": "£",
+      "billingCycle": "yearly",
+      "lastPaymentDate": "2026-05-07",
+      "nextPaymentDate": "2027-05-07",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "paymentAccount": "Ehsan Khan Account",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false
+    },
+    {
+      "id": "1780494371",
+      "name": "ICO Certificate",
+      "cost": 50,
+      "currency": "£",
+      "billingCycle": "yearly",
+      "lastPaymentDate": "2026-05-11",
+      "nextPaymentDate": "2027-05-11",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "paymentAccount": "Hammad Account",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false
+    },
+    {
+      "id": "1780494576",
+      "name": "Hosting (Blue Host)",
+      "cost": 59.88,
+      "currency": "$",
+      "billingCycle": "yearly",
+      "lastPaymentDate": "2025-12-08",
+      "nextPaymentDate": "2026-12-08",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "paymentAccount": "Ehsan Khan Account",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false
+    },
+    {
+      "id": "1780494845",
+      "name": "Vimeo",
+      "cost": 15,
+      "currency": "€",
+      "billingCycle": "monthly",
+      "lastPaymentDate": "2026-06-03",
+      "nextPaymentDate": "2026-07-03",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "paymentAccount": "Ehsan Khan Account",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false
+    },
+    {
+      "id": "1780495043",
+      "name": "Microsoft 365 (Ehsan Khan)",
+      "cost": 7,
+      "currency": "€",
+      "billingCycle": "monthly",
+      "lastPaymentDate": "2026-05-27",
+      "nextPaymentDate": "2026-06-27",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "paymentAccount": "Ehsan Khan Account",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false
+    },
+    {
+      "id": "1780495113",
+      "name": "Vidiq",
+      "cost": 14.25,
+      "currency": "€",
+      "billingCycle": "monthly",
+      "lastPaymentDate": "2026-05-24",
+      "nextPaymentDate": "2026-06-24",
+      "category": "SaaS",
+      "email": "pearlsdevelopers@gmail.com",
+      "paymentAccount": "Ehsan Khan Account",
+      "status": "active",
+      "notified5Days": false,
+      "notified3Days": false,
+      "notifiedDueDay": false
+    }
+  ],
+  "logs": [],
+  "settings": {
+    "smtpHost": "mail.pearls-developers.co.uk",
+    "smtpPort": "587",
+    "smtpUser": "info@pearls-developers.co.uk",
+    "smtpPass": "Well2025%%%%%%",
+    "smtpFrom": "info@pearls-developers.co.uk",
+    "notificationEmail": "info@pearls-developers.co.uk"
+  },
+  "sessions": {
+    "686f8613d3d85eeeb4f435dcac6327a7c4d67b728b24b22612c3c3959fe68fd8": "hammad",
+    "41b888e7db6a11f636e01f68d80fdcc376037307ff139d62e7132d3e5a2dc5a4": "hammad",
+    "117a28f29ff41dd1346c58ed5527b7d162788ad25622852352d16b0b2286ed35": "admin",
+    "162b778de97173bdcac27ce2d382ef1463f8136cf7247f198a96dfdedcf53d53": "admin",
+    "4691dfdf2b936668d0185bd081904552b9df981f247acb9e46b52204e53869c4": "admin",
+    "9a3b0f6b12a45ee6bd7e8614540ebb5ba42b40194000e55432aed3990e99ee10": "hammad",
+    "e3ae58ac212685cb52bca3fb118f25404c4e005da56547cb67e5e8b4dd64c79c": "admin",
+    "6188c6a717945eb86c0b8e16e482e84259418b49a636ae44451c1d0e6e00373b": "admin",
+    "ac6f0f2868954ca2c44dd2089c5761ef0d2239fa828bc29dfe92df63b736b892": "admin",
+    "b35a490dc06455f432254b1b0a0840a03e8c1760cf5738c7ae3a557fffddc9b0": "admin",
+    "e573fd3fa4a9be9603ed405efe73d7dcd797be379967bdfbf40395278080ee18": "admin",
+    "d0b92e2a3e6b2271e578d199d3fc06aa55e18c3120e689c877aa6e490f63d80b": "admin",
+    "11aa806c627e87255282391bb6e3b5d7b371f4324bcb96c351057cd1255ea77c": "admin",
+    "e4a3f0fabfa696e5795c90579994ba05723129728de650bb1e7ace5fcdd2c063": "admin",
+    "634ae07b41c9a4173dd2f0b1bfc1e5c2a39c97bd74c083a7423584a00a601059": "admin",
+    "fcee58fd80f979f79d7ec4f351558fa65a4c52b5c3afac09c8331cd57d67df2d": "admin",
+    "03ae5c6528f6821cf1e593e9d36225cb0b6f7b52f8f099800c3bed4f57a5eaaa": "admin",
+    "c71da41ff22fb9b7445d448c3c0e02cbfa785ff16d96284328ea64470301424b": "admin",
+    "aa504c58a6b210c5e1ee92cd897e202bc3eadb85647801c72f196af44bbeb250": "admin",
+    "cc755adb451fa3e8c51ce57f678c6bc15b1a341168179a569ed1b6c9a97ee58e": "admin",
+    "3541123ddfa0bddbc9065de0aafcc0877bbaa32c811313502538e787e65027ad": "hammad",
+    "91a26c563955bd3e8ac56cbfa5e7a18dac0e87290c6efc50c44e9cd2d3c17d5b": "admin",
+    "645f6a1c5857010eebe436652d3c90a817c907c10a0294781b7a46bd09971ae5": "hammad",
+    "af11b5314c4d0ede4e2d133c2205312e648c78a98b9021579e6854e0679ef9d9": "admin",
+    "a34a68dba29582d2085aaa63537617d5f64e85e0577eab21d83793cabe680322": "admin",
+    "b7540d80c88d177620705861faf4b8d4870d206194f17350b852146a49ee7a9b": "hammad",
+    "7551464a2ea3c46c94e694bb0438cf4b18c97e1840ea987cda487487e204142a": "hammad",
+    "06eddcb6ebd30544d278ee74cb3b90c067bb42b0fcc975f8d528aff4eaf566af": "admin",
+    "a77d69ba100cbcf1e91c42bc63dfc5e0bb2d87db8d2f7bd6ac188d7440c82587": "hammad",
+    "89b0827cf9c6276342b975c3b7735c41a0253ea2016792239996f1b570469663": "hammad",
+    "cc84c205aa52df8caa474ae824b24f51b4311a240d8e1f51320aa6a0eecd397c": "hammad",
+    "6caf26b02aff47a3c69b8786c6a06fa10653c1770299ffcd94850e4e89fc9196": "hammad",
+    "850dd544b87beefb3e73b2d2879e63ac941c8407cd1cedd756054c553b1ece41": "hammad",
+    "c25d67fd449dc5b28069f2b53ea4fd25e48744bf81fec9bc8659b19472a83b29": "hammad",
+    "29b9c3926af7ce3fd3400f881a7b9dde14bc12dcb7e46406d2db425d200f5294": "hammad",
+    "38ad3873a6d619434d0eba95c79d54e1c4c74f70ef26ca1e1feef9e9ac9473f7": "hammad",
+    "cdb0bbfd44a12400d22bcdcc85a83920737127a49a6a60ae18231b181e168c45": "admin",
+    "14765a4b6d259db87eb9a8bc162c55502d48e0fe9f738a8322688ce74e3b39d5": "admin",
+    "366a666d4c50806c3b46cf3a60efed3194c6b50c16524ba0312fb81e20778238": "admin",
+    "712b717c988e665ee3d5443bcc0538d620a70675448aa5b2c9d268a3118d371d": "admin",
+    "6dba249cffcef9eb19f219a8920145d0f4a28ddad3437f5dbca7794f9999a41c": "hammad",
+    "8a6a30b5b26df2a8cb75a9494a97bf3eb90847e127f299d3cac46b6290b9fddb": "hammad"
+  },
+  "systemDateOverride": null,
+  "accounts": [
+    {
+      "code": "1000",
+      "name": "Main Bank Account (Developers)",
+      "type": "Asset",
+      "company": "Pearls Developers Limited"
+    },
+    {
+      "code": "1010",
+      "name": "Main Bank Account (IT)",
+      "type": "Asset",
+      "company": "Pearls IT"
+    },
+    {
+      "code": "1200",
+      "name": "Accounts Receivable (Debtors)",
+      "type": "Asset",
+      "company": "All"
+    },
+    {
+      "code": "2000",
+      "name": "Accounts Payable (Creditors)",
+      "type": "Liability",
+      "company": "All"
+    },
+    {
+      "code": "2200",
+      "name": "VAT/Tax Payable",
+      "type": "Liability",
+      "company": "All"
+    },
+    {
+      "code": "3000",
+      "name": "Retained Earnings",
+      "type": "Equity",
+      "company": "All"
+    },
+    {
+      "code": "4000",
+      "name": "Sales Services Revenue",
+      "type": "Revenue",
+      "company": "All"
+    },
+    {
+      "code": "5000",
+      "name": "Hosting & Software Expense",
+      "type": "Expense",
+      "company": "All"
+    },
+    {
+      "code": "5100",
+      "name": "General & Admin Expense",
+      "type": "Expense",
+      "company": "All"
+    }
+  ],
+  "invoices": [],
+  "expenses": [],
+  "journalEntries": [],
+  "bankStatements": [
+    {
+      "id": "BS-MOCK-1",
+      "company": "Pearls Developers Limited",
+      "date": "2026-06-04",
+      "description": "General Deposit Ref: #99011",
+      "amount": 1500,
+      "type": "Deposit",
+      "status": "Reconciled",
+      "matchedJournalEntryId": ""
+    },
+    {
+      "id": "BS-MOCK-2",
+      "company": "Pearls IT",
+      "date": "2026-06-04",
+      "description": "Monthly Bank Account Fee",
+      "amount": -15,
+      "type": "Payment",
+      "status": "Unreconciled",
+      "matchedJournalEntryId": null
+    }
+  ],
+  "leads": [],
+  "tickets": [],
+  "employees": [
+    {
+      "id": "EMP-102",
+      "name": "Jane Doe",
+      "email": "jane.doe@pearls-developers.co.uk",
+      "phone": "+44 7700 900088",
+      "company": "Pearls Developers Limited",
+      "department": "Engineering",
+      "jobTitle": "Senior Full Stack Engineer",
+      "joinDate": "2025-03-01",
+      "contractEndDate": "2027-03-01",
+      "status": "Active",
+      "leaveBalance": {
+        "annual": 24,
+        "sick": 9,
+        "parental": 5
+      },
+      "documents": [
+        {
+          "name": "Jane_Contract_Final.pdf",
+          "type": "Contract",
+          "uploadDate": "2025-03-01"
+        }
+      ],
+      "disciplinaryRecords": []
+    },
+    {
+      "id": "EMP-103",
+      "name": "Bob Smith",
+      "email": "bob.smith@pearls-developers.co.uk",
+      "phone": "+44 7700 900099",
+      "company": "Pearls Developers Limited",
+      "department": "Sales",
+      "jobTitle": "Sales Executive",
+      "joinDate": "2025-06-01",
+      "contractEndDate": "2026-06-30",
+      "status": "Active",
+      "leaveBalance": {
+        "annual": 28,
+        "sick": 10,
+        "parental": 5
+      },
+      "documents": [],
+      "disciplinaryRecords": []
+    },
+    {
+      "id": "EMP-104",
+      "name": "Ehsan Khan",
+      "email": "ehsan@pearls-it.co.uk",
+      "phone": "+44 7700 900111",
+      "company": "Pearls IT",
+      "department": "Support",
+      "jobTitle": "Lead Support Engineer",
+      "joinDate": "2024-10-15",
+      "contractEndDate": null,
+      "status": "Active",
+      "leaveBalance": {
+        "annual": 26,
+        "sick": 8,
+        "parental": 5
+      },
+      "documents": [
+        {
+          "name": "SLA_Cert_ITIL.pdf",
+          "type": "Certificate",
+          "uploadDate": "2024-12-10"
+        }
+      ],
+      "disciplinaryRecords": []
+    },
+    {
+      "id": "EMP-105",
+      "name": "Alice Johnson",
+      "email": "alice@pearls-it.co.uk",
+      "phone": "+44 7700 900222",
+      "company": "Pearls IT",
+      "department": "Consulting",
+      "jobTitle": "IT Consultant",
+      "joinDate": "2025-01-15",
+      "contractEndDate": "2026-12-31",
+      "status": "Active",
+      "leaveBalance": {
+        "annual": 28,
+        "sick": 10,
+        "parental": 5
+      },
+      "documents": [],
+      "disciplinaryRecords": []
+    }
+  ],
+  "leaves": [
+    {
+      "id": "LV-101",
+      "employeeId": "EMP-102",
+      "employeeName": "Jane Doe",
+      "company": "Pearls Developers Limited",
+      "leaveType": "Annual",
+      "startDate": "2026-06-08",
+      "endDate": "2026-06-12",
+      "status": "Pending",
+      "notes": "Family trip"
+    },
+    {
+      "id": "LV-102",
+      "employeeId": "EMP-104",
+      "employeeName": "Ehsan Khan",
+      "company": "Pearls IT",
+      "leaveType": "Sick",
+      "startDate": "2026-06-02",
+      "endDate": "2026-06-03",
+      "status": "Approved",
+      "notes": "Doctor recommended bed rest"
+    }
+  ],
+  "attendance": [
+    {
+      "id": "ATT-101",
+      "employeeId": "EMP-101",
+      "employeeName": "Hammad Arshad",
+      "company": "Pearls Developers Limited",
+      "date": "2026-06-05",
+      "status": "Present",
+      "checkIn": "08:55",
+      "checkOut": "17:30"
+    },
+    {
+      "id": "ATT-102",
+      "employeeId": "EMP-102",
+      "employeeName": "Jane Doe",
+      "company": "Pearls Developers Limited",
+      "date": "2026-06-05",
+      "status": "Late",
+      "checkIn": "09:45",
+      "checkOut": "17:00"
+    }
+  ],
+  "performanceReviews": [
+    {
+      "id": "PR-101",
+      "employeeId": "EMP-102",
+      "employeeName": "Jane Doe",
+      "company": "Pearls Developers Limited",
+      "reviewDate": "2025-12-20",
+      "reviewer": "Hammad Arshad",
+      "score": 5,
+      "feedback": "Exceptional code quality and sprint deliveries."
+    },
+    {
+      "id": "PR-102",
+      "employeeId": "EMP-104",
+      "employeeName": "Ehsan Khan",
+      "company": "Pearls IT",
+      "reviewDate": "2025-12-18",
+      "reviewer": "Hammad Arshad",
+      "score": 4,
+      "feedback": "Very responsive to support SLA tickets and great customer feedback."
+    }
+  ],
+  "itTasks": [
+    {
+      "id": "TSK-1001",
+      "title": "Routine Server OS Patches & Security Updates",
+      "type": "SysAdmin",
+      "category": "Server Maintenance",
+      "status": "Closed",
+      "priority": "Medium",
+      "assignedTo": "Ehsan Khan",
+      "estimatedHours": 4,
+      "actualHours": 3.5,
+      "dateCreated": "2026-05-15",
+      "dueDate": "2026-05-20",
+      "dateCompleted": "2026-05-18",
+      "notes": "Applied latest Ubuntu kernel security patches and rebooted the server. Uptime verified.",
+      "website": ""
+    },
+    {
+      "id": "TSK-1002",
+      "title": "Weekly Database Backup Verification",
+      "type": "SysAdmin",
+      "category": "Backup Schedule",
+      "status": "Resolved",
+      "priority": "High",
+      "assignedTo": "Ehsan Khan",
+      "estimatedHours": 2,
+      "actualHours": 2,
+      "dateCreated": "2026-06-01",
+      "dueDate": "2026-06-02",
+      "dateCompleted": "2026-06-01",
+      "notes": "Successfully restored weekly database backup to staging environment. Integrity check passed.",
+      "website": ""
+    },
+    {
+      "id": "TSK-1003",
+      "title": "Renew SSL Certificate for tracker.pearls-developers-limited.co.uk",
+      "type": "SysAdmin",
+      "category": "SSL Renewal",
+      "status": "Open",
+      "priority": "Critical",
+      "assignedTo": "Ehsan Khan",
+      "estimatedHours": 1,
+      "actualHours": 0,
+      "dateCreated": "2026-06-03",
+      "dueDate": "2026-06-10",
+      "dateCompleted": null,
+      "notes": "SSL certificate expires in 5 days. Needs Let's Encrypt auto-renew script verification.",
+      "website": ""
+    },
+    {
+      "id": "TSK-1004",
+      "title": "Firewall Review & Port Audit",
+      "type": "SysAdmin",
+      "category": "Firewall Review",
+      "status": "Blocked",
+      "priority": "Medium",
+      "assignedTo": "Hammad Arshad",
+      "estimatedHours": 6,
+      "actualHours": 2,
+      "dateCreated": "2026-06-04",
+      "dueDate": "2026-06-08",
+      "dateCompleted": null,
+      "notes": "Blocked waiting for access credentials to the external router management panel.",
+      "website": ""
+    },
+    {
+      "id": "TSK-1005",
+      "title": "Implement Client Portal Layout Updates",
+      "type": "WebDev",
+      "category": "Development",
+      "status": "In Progress",
+      "priority": "High",
+      "assignedTo": "Jane Doe",
+      "website": "tracker.pearls-developers-limited.co.uk",
+      "estimatedHours": 16,
+      "actualHours": 8,
+      "githubCommit": "",
+      "dateCreated": "2026-06-02",
+      "dueDate": "2026-06-07",
+      "dateCompleted": null,
+      "notes": "Working on layout responsiveness for mobile screens and fixing floating containers."
+    },
+    {
+      "id": "TSK-1006",
+      "title": "Integrate Investments Module API Endpoints",
+      "type": "WebDev",
+      "category": "Development",
+      "status": "Closed",
+      "priority": "Critical",
+      "assignedTo": "Jane Doe",
+      "website": "tracker.pearls-developers-limited.co.uk",
+      "estimatedHours": 12,
+      "actualHours": 14,
+      "githubCommit": "feat(investments): add portfolio api #103",
+      "dateCreated": "2026-06-03",
+      "dueDate": "2026-06-05",
+      "dateCompleted": "2026-06-05",
+      "notes": "Completed investments CRUD, journal bookings, and yields scheduler. Pushed to main."
+    },
+    {
+      "id": "TSK-1007",
+      "title": "Sprint 3 Planning & Task Assignments",
+      "type": "WebDev",
+      "category": "Sprint Planning",
+      "status": "Open",
+      "priority": "Low",
+      "assignedTo": "Hammad Arshad",
+      "website": "All",
+      "estimatedHours": 3,
+      "actualHours": 0,
+      "githubCommit": "",
+      "dateCreated": "2026-06-05",
+      "dueDate": "2026-06-12",
+      "dateCompleted": null,
+      "notes": "Preparing sprint backlog for the upcoming development cycles."
+    }
+  ],
+  "itIncidents": [
+    {
+      "id": "INC-1001",
+      "title": "Main Database Connectivity Outage",
+      "severity": "Critical",
+      "date": "2026-05-28",
+      "status": "Resolved",
+      "rootCause": "Connection pool exhausted due to unindexed query in sales analytics report.",
+      "resolution": "Restarted database service, increased connection limit, and added index on lead creation date."
+    },
+    {
+      "id": "INC-1002",
+      "title": "High Memory Utilization Alert on Web Node 1",
+      "severity": "High",
+      "date": "2026-06-04",
+      "status": "Investigating",
+      "rootCause": "Memory leak suspected in server-side session clean-up script.",
+      "resolution": ""
+    }
+  ],
+  "itChanges": [
+    {
+      "id": "CHG-1001",
+      "title": "Apply Server OS Kernels Security Patches",
+      "requestedBy": "Ehsan Khan",
+      "dateScheduled": "2026-05-18",
+      "status": "Implemented",
+      "impact": "Medium",
+      "testingNotes": "Verified system reboot and service availability. Uptime logged."
+    },
+    {
+      "id": "CHG-1002",
+      "title": "Deploy New Investments Module Backend & Database Update",
+      "requestedBy": "Jane Doe",
+      "dateScheduled": "2026-06-05",
+      "status": "Approved",
+      "impact": "High",
+      "testingNotes": "Local JSDOM checks passed. Backup remote database before schema deployment."
+    }
+  ],
+  "itDeployments": [
+    {
+      "id": "DEP-1001",
+      "website": "tracker.pearls-developers-limited.co.uk",
+      "version": "v1.7.0",
+      "deployDate": "2026-06-05",
+      "deployedBy": "Jane Doe",
+      "commitRef": "fix(layout): close stray div and fix mobile stacking #109",
+      "status": "Success"
+    },
+    {
+      "id": "DEP-1002",
+      "website": "tracker.pearls-developers-limited.co.uk",
+      "version": "v1.8.0",
+      "deployDate": "2026-06-05",
+      "deployedBy": "Jane Doe",
+      "commitRef": "feat(investments): release portfolio manager #110",
+      "status": "Success"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "CON-1001",
+      "title": "Mutual NDA with TechCorp",
+      "type": "NDA",
+      "company": "Pearls Developers Limited",
+      "signDate": "2026-01-10",
+      "expiryDate": "2029-01-10",
+      "status": "Active",
+      "assignedCounsel": "Hammad Arshad",
+      "documentName": "mutual_nda_techcorp_final.pdf",
+      "notes": "Covers initial product collaboration talks."
+    },
+    {
+      "id": "CON-1002",
+      "title": "Office Tenancy Agreement",
+      "type": "Property Legal Document (PDL)",
+      "company": "Pearls Developers Limited",
+      "signDate": "2025-06-01",
+      "expiryDate": "2026-06-01",
+      "status": "Expired",
+      "assignedCounsel": "External Counsel (Apex Law)",
+      "documentName": "office_lease_2025.pdf",
+      "notes": "HQ office lease. Under negotiation for renewal."
+    },
+    {
+      "id": "CON-1003",
+      "title": "IT Maintenance Master Agreement",
+      "type": "Vendor Agreement (PIT)",
+      "company": "Pearls IT",
+      "signDate": "2025-10-15",
+      "expiryDate": "2026-10-15",
+      "status": "Active",
+      "assignedCounsel": "Ehsan Khan",
+      "documentName": "pit_maintenance_vendor_agreement.pdf",
+      "notes": "Standard SLA coverage contract."
+    }
+  ],
+  "cases": [
+    {
+      "id": "CAS-1001",
+      "title": "Copyright Dispute with DevGroup Inc.",
+      "company": "Pearls Developers Limited",
+      "status": "Active",
+      "assignedCounsel": "Hammad Arshad",
+      "courtDate": "2026-06-18",
+      "jurisdiction": "London Commercial Court",
+      "notes": "Preliminary hearing scheduled to discuss code provenance."
+    },
+    {
+      "id": "CAS-1002",
+      "title": "Trademark Opposition - SubPulse Logo",
+      "company": "Pearls IT",
+      "status": "Active",
+      "assignedCounsel": "External Patent Atty",
+      "courtDate": "2026-07-05",
+      "jurisdiction": "UK Intellectual Property Office",
+      "notes": "Defending opposition filed by competitor."
+    }
+  ],
+  "compliance": [
+    {
+      "id": "CMP-1001",
+      "title": "Annual Information Commissioner Office (ICO) Registration",
+      "company": "Pearls Developers Limited",
+      "dueDate": "2026-06-15",
+      "status": "Pending",
+      "assignedTo": "Hammad Arshad",
+      "notes": "Annual certification renewal fee payment."
+    },
+    {
+      "id": "CMP-1002",
+      "title": "GDPR Compliance Privacy Audit",
+      "company": "Pearls IT",
+      "dueDate": "2026-06-25",
+      "status": "Pending",
+      "assignedTo": "Ehsan Khan",
+      "notes": "Review user consent logs on billing server."
+    },
+    {
+      "id": "CMP-1003",
+      "title": "Corporation Tax Return Filing (FY25)",
+      "company": "Pearls Developers Limited",
+      "dueDate": "2026-05-31",
+      "status": "Completed",
+      "assignedTo": "Hammad Arshad",
+      "notes": "Filing complete, confirmation ref #TX99011."
+    }
+  ],
+  "fleet_vehicles": [
+    {
+      "id": "VEH-101",
+      "make": "Yamaha",
+      "model": "MT-07",
+      "type": "Motorcycle",
+      "plateNumber": "LN68 XYT",
+      "year": 2018,
+      "company": "Pearls Developers Limited",
+      "status": "Leased",
+      "insuranceExpiry": "2026-07-15",
+      "roadTaxExpiry": "2026-06-25",
+      "conditionRecords": [
+        {
+          "date": "2026-01-15",
+          "notes": "Regular service completed. Brake pads replaced.",
+          "loggedBy": "Hammad Arshad",
+          "severity": "Good"
+        }
+      ]
+    },
+    {
+      "id": "VEH-102",
+      "make": "Toyota",
+      "model": "Prius",
+      "type": "Car",
+      "plateNumber": "LG21 DFE",
+      "year": 2021,
+      "company": "Pearls Developers Limited",
+      "status": "Available",
+      "insuranceExpiry": "2026-08-20",
+      "roadTaxExpiry": "2026-09-12",
+      "conditionRecords": []
+    },
+    {
+      "id": "VEH-103",
+      "make": "Honda",
+      "model": "Civic",
+      "type": "Car",
+      "plateNumber": "LD19 TYR",
+      "year": 2019,
+      "company": "Pearls IT",
+      "status": "Maintenance",
+      "insuranceExpiry": "2026-05-10",
+      "roadTaxExpiry": "2026-05-15",
+      "conditionRecords": [
+        {
+          "date": "2026-05-10",
+          "notes": "Front bumper scratches. Sent to workshop for paint repair.",
+          "loggedBy": "Ehsan Khan",
+          "severity": "Fair"
+        }
+      ]
+    },
+    {
+      "id": "VEH-104",
+      "make": "BMW",
+      "model": "R1250 GS",
+      "type": "Motorcycle",
+      "plateNumber": "LS22 KLP",
+      "year": 2022,
+      "company": "Pearls IT",
+      "status": "Leased",
+      "insuranceExpiry": "2026-10-05",
+      "roadTaxExpiry": "2026-11-30",
+      "conditionRecords": []
+    }
+  ],
+  "lease_contracts": [
+    {
+      "id": "LSE-1001",
+      "vehicleId": "VEH-101",
+      "lesseeName": "John Smith",
+      "lesseeEmail": "john.smith@gmail.com",
+      "lesseePhone": "+44 7911 123456",
+      "startDate": "2026-01-01",
+      "endDate": "2026-07-01",
+      "monthlyRate": 350.00,
+      "securityDeposit": 500.00,
+      "status": "Active",
+      "paymentSchedule": [
+        { "id": "PAY-1001-1", "dueDate": "2026-01-01", "amount": 350.00, "status": "Paid", "paymentDate": "2026-01-02" },
+        { "id": "PAY-1001-2", "dueDate": "2026-02-01", "amount": 350.00, "status": "Paid", "paymentDate": "2026-02-01" },
+        { "id": "PAY-1001-3", "dueDate": "2026-03-01", "amount": 350.00, "status": "Paid", "paymentDate": "2026-03-03" },
+        { "id": "PAY-1001-4", "dueDate": "2026-04-01", "amount": 350.00, "status": "Paid", "paymentDate": "2026-04-01" },
+        { "id": "PAY-1001-5", "dueDate": "2026-05-01", "amount": 350.00, "status": "Paid", "paymentDate": "2026-05-02" },
+        { "id": "PAY-1001-6", "dueDate": "2026-06-01", "amount": 350.00, "status": "Pending", "paymentDate": null },
+        { "id": "PAY-1001-7", "dueDate": "2026-07-01", "amount": 350.00, "status": "Pending", "paymentDate": null }
+      ]
+    }
+  ]
+}
