@@ -2820,6 +2820,170 @@ if (preg_match('#^leases/([^/]+)/payments/([^/]+)$#', $route, $m)) {
     }
 }
 
+// --- PAYROLL ENDPOINTS ---
+if ($route === 'payroll/runs') {
+    if (!isset($db['payroll_runs'])) {
+        $db['payroll_runs'] = [];
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        echo json_encode($db['payroll_runs']);
+        exit;
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $runId = 'PR-' . time();
+        $newRun = [
+            'id' => $runId,
+            'month' => $body['month'] ?? '',
+            'company' => $body['company'] ?? '',
+            'status' => 'Draft',
+            'processedDate' => getSystemDate($db)->format('Y-m-d'),
+            'processedBy' => $_SESSION['username'] ?? 'hammad',
+            'totalGross' => floatval($body['totalGross'] ?? 0),
+            'totalDeductions' => floatval($body['totalDeductions'] ?? 0),
+            'totalNet' => floatval($body['totalNet'] ?? 0),
+            'records' => $body['records'] ?? []
+        ];
+        $db['payroll_runs'][] = $newRun;
+        writeDb($dbFile, $db);
+        http_response_code(201);
+        echo json_encode($newRun);
+        exit;
+    }
+}
+
+if (preg_match('#^payroll/runs/([^/]+)$#', $route, $m)) {
+    $runId = $m[1];
+    if (!isset($db['payroll_runs'])) {
+        $db['payroll_runs'] = [];
+    }
+    $runIndex = -1;
+    foreach ($db['payroll_runs'] as $idx => $r) {
+        if ($r['id'] === $runId) {
+            $runIndex = $idx;
+            break;
+        }
+    }
+    if ($runIndex === -1) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Payroll run not found.']);
+        exit;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        if ($db['payroll_runs'][$runIndex]['status'] === 'Approved') {
+            http_response_code(400);
+            echo json_encode(['error' => 'Cannot delete an approved payroll run.']);
+            exit;
+        }
+        array_splice($db['payroll_runs'], $runIndex, 1);
+        writeDb($dbFile, $db);
+        echo json_encode(['success' => true]);
+        exit;
+    }
+}
+
+if (preg_match('#^payroll/runs/([^/]+)/approve$#', $route, $m)) {
+    $runId = $m[1];
+    if (!isset($db['payroll_runs'])) {
+        $db['payroll_runs'] = [];
+    }
+    $runIndex = -1;
+    foreach ($db['payroll_runs'] as $idx => $r) {
+        if ($r['id'] === $runId) {
+            $runIndex = $idx;
+            break;
+        }
+    }
+    if ($runIndex === -1) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Payroll run not found.']);
+        exit;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $run = &$db['payroll_runs'][$runIndex];
+        if ($run['status'] === 'Approved') {
+            http_response_code(400);
+            echo json_encode(['error' => 'Payroll run is already approved.']);
+            exit;
+        }
+        
+        $run['status'] = 'Approved';
+        
+        // Generate General Ledger Journal Entry
+        if (!isset($db['journalEntries'])) {
+            $db['journalEntries'] = [];
+        }
+        
+        $lines = [
+            ['accountCode' => '7000', 'debit' => $run['totalGross'], 'credit' => 0], // Wages Expense
+            ['accountCode' => '2100', 'debit' => 0, 'credit' => $run['totalNet']], // Wages Payable
+        ];
+        if ($run['totalDeductions'] > 0) {
+            // Deductions Payable
+            $lines[] = ['accountCode' => '2200', 'debit' => 0, 'credit' => $run['totalDeductions']];
+        }
+        
+        $je = [
+            'id' => 'JE-' . time() . 'payroll',
+            'date' => getSystemDate($db)->format('Y-m-d'),
+            'description' => "Payroll approved for " . $run['company'] . " (" . $run['month'] . ")",
+            'company' => $run['company'],
+            'referenceType' => 'Payroll',
+            'referenceId' => $run['id'],
+            'lines' => $lines
+        ];
+        $db['journalEntries'][] = $je;
+        
+        writeDb($dbFile, $db);
+        echo json_encode($run);
+        exit;
+    }
+}
+
+if (preg_match('#^employees/([^/]+)/salary-structure$#', $route, $m)) {
+    $empId = $m[1];
+    if (!isset($db['employees'])) {
+        $db['employees'] = [];
+    }
+    $empIndex = -1;
+    foreach ($db['employees'] as $idx => $e) {
+        if ($e['id'] === $empId) {
+            $empIndex = $idx;
+            break;
+        }
+    }
+    if ($empIndex === -1) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Employee not found.']);
+        exit;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+        $db['employees'][$empIndex]['salaryStructure'] = [
+            'baseSalary' => floatval($body['baseSalary'] ?? 0),
+            'allowances' => [
+                'travel' => floatval($body['allowances']['travel'] ?? 0),
+                'housing' => floatval($body['allowances']['housing'] ?? 0),
+                'mobile' => floatval($body['allowances']['mobile'] ?? 0)
+            ],
+            'deductions' => [
+                'taxPercent' => floatval($body['deductions']['taxPercent'] ?? 0),
+                'pensionPercent' => floatval($body['deductions']['pensionPercent'] ?? 0),
+                'loanRepayment' => floatval($body['deductions']['loanRepayment'] ?? 0)
+            ],
+            'bankDetails' => [
+                'bankName' => $body['bankDetails']['bankName'] ?? '',
+                'iban' => $body['bankDetails']['iban'] ?? '',
+                'sortCode' => $body['bankDetails']['sortCode'] ?? ''
+            ]
+        ];
+        writeDb($dbFile, $db);
+        echo json_encode($db['employees'][$empIndex]);
+        exit;
+    }
+}
+
 http_response_code(404);
 echo json_encode(['error' => 'Route not found.']);
 exit;

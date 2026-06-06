@@ -54,6 +54,13 @@ let activeLeasingCompany = 'Consolidated';
 let activeLeasingTab = 'dashboard';
 let activeLeasingReport = 'income';
 
+// Payroll State Variables
+let payrollRuns = [];
+let activePayrollCompany = 'Consolidated';
+let activePayrollTab = 'dashboard';
+let activePayrollReport = 'summary';
+let currentPayrollPreview = null;
+
 let authToken = localStorage.getItem('subpulse_auth_token') || null;
 let authIsRegisterMode = false;
 
@@ -184,6 +191,7 @@ async function initApp() {
       await fetchCompliance();
       await fetchVehicles();
       await fetchLeases();
+      await fetchPayrollRuns();
     } else {
       authToken = null;
       localStorage.removeItem('subpulse_auth_token');
@@ -298,6 +306,11 @@ function setupEventListeners() {
         viewSubtitle.textContent = 'Fleet management, lease contracts, and monthly payment tracking';
         calculateAndRenderLeasingMetrics();
         renderLeasingSubTab();
+      } else if (viewName === 'payroll') {
+        viewTitle.textContent = 'Payroll Processing Portal';
+        viewSubtitle.textContent = 'Salary structures, monthly payroll runs, bank exports, and payslip archiving';
+        calculateAndRenderPayrollMetrics();
+        renderPayrollSubTab();
       }
     });
   });
@@ -996,6 +1009,7 @@ function setupEventListeners() {
   document.getElementById('compliance-form').addEventListener('submit', handleComplianceSubmit);
 
   setupLeasingEventListeners();
+  setupPayrollEventListeners();
 }
 
 // Handle login/register submit
@@ -8077,5 +8091,955 @@ window.compliance = compliance;
 window.vehicles = vehicles;
 window.leases = leases;
 
+// --- PAYROLL CONTROLLER LOGIC ---
 
+async function fetchPayrollRuns() {
+  const data = await apiCall('/payroll/runs');
+  if (data) {
+    payrollRuns = data;
+  }
+}
 
+function renderPayrollSubTab() {
+  calculateAndRenderPayrollMetrics();
+  
+  if (activePayrollTab === 'dashboard') {
+    renderPayrollDashboard();
+  } else if (activePayrollTab === 'salary') {
+    renderPayrollSalary();
+  } else if (activePayrollTab === 'run') {
+    renderPayrollRun();
+  } else if (activePayrollTab === 'history') {
+    renderPayrollHistory();
+  } else if (activePayrollTab === 'reports') {
+    renderPayrollReports();
+  }
+}
+
+function renderPayrollDashboard() {
+  const currentMonthStr = systemStatus.simulatedDate ? systemStatus.simulatedDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
+  
+  // 1. Render Alerts / Pending Actions
+  const alertsContainer = document.getElementById('payroll-alerts-container');
+  alertsContainer.innerHTML = '';
+  
+  let alerts = [];
+  
+  // Check for draft runs
+  const draftRuns = payrollRuns.filter(r => r.status === 'Draft');
+  draftRuns.forEach(r => {
+    alerts.push({
+      type: 'warning',
+      text: `Draft payroll run exists for <strong>${r.company}</strong> (${r.month}). Admin approval is required.`,
+      icon: 'fa-hourglass-half'
+    });
+  });
+
+  // Check if current month is processed for both companies
+  const companies = ['Pearls Developers Limited', 'Pearls IT'];
+  companies.forEach(comp => {
+    // If selected company doesn't match this comp, skip
+    if (activePayrollCompany !== 'Consolidated' && activePayrollCompany !== comp) return;
+    
+    const hasRun = payrollRuns.some(r => r.month === currentMonthStr && r.company === comp);
+    if (!hasRun) {
+      alerts.push({
+        type: 'info',
+        text: `Payroll processing for <strong>${comp}</strong> (${currentMonthStr}) is pending calculation.`,
+        icon: 'fa-calculator'
+      });
+    }
+  });
+
+  if (alerts.length === 0) {
+    alertsContainer.innerHTML = '<div class="text-center text-muted" style="padding: 20px;">No alerts. Payroll runs are up to date.</div>';
+  } else {
+    alerts.forEach(al => {
+      const card = document.createElement('div');
+      card.className = `glass-panel alert-card alert-${al.type}`;
+      card.style.padding = '12px 15px';
+      card.style.borderRadius = '6px';
+      card.style.display = 'flex';
+      card.style.alignItems = 'center';
+      card.style.gap = '12px';
+      card.style.background = al.type === 'warning' ? 'rgba(217, 119, 6, 0.1)' : 'rgba(14, 165, 233, 0.1)';
+      card.style.border = al.type === 'warning' ? '1px solid rgba(217, 119, 6, 0.2)' : '1px solid rgba(14, 165, 233, 0.2)';
+      
+      const iconColor = al.type === 'warning' ? 'text-amber' : 'text-cyan';
+      card.innerHTML = `<i class="fa-solid ${al.icon} ${iconColor}" style="font-size:16px;"></i> <span style="font-size:12px; color:#e2e8f0;">${al.text}</span>`;
+      alertsContainer.appendChild(card);
+    });
+  }
+
+  // 2. Render Recent Approved Runs
+  const approvedBody = document.getElementById('payroll-approved-summary-body');
+  approvedBody.innerHTML = '';
+  
+  let approvedRuns = payrollRuns.filter(r => r.status === 'Approved');
+  if (activePayrollCompany !== 'Consolidated') {
+    approvedRuns = approvedRuns.filter(r => r.company === activePayrollCompany);
+  }
+  
+  // Sort by month desc
+  approvedRuns.sort((a,b) => b.month.localeCompare(a.month));
+  
+  // Take top 5
+  const topRuns = approvedRuns.slice(0, 5);
+  
+  if (topRuns.length === 0) {
+    approvedBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding: 20px;">No approved runs registered.</td></tr>';
+  } else {
+    topRuns.forEach(r => {
+      approvedBody.innerHTML += `
+        <tr>
+          <td><strong>${r.month}</strong></td>
+          <td><span style="font-size:11px; padding:3px 8px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">${r.company}</span></td>
+          <td style="color:var(--accent-emerald); font-weight:600;">£${r.totalNet.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          <td style="font-size:11px; color:var(--color-text-muted);">${r.processedDate}</td>
+        </tr>
+      `;
+    });
+  }
+}
+
+function renderPayrollSalary() {
+  const tbody = document.getElementById('payroll-salary-registry-body');
+  tbody.innerHTML = '';
+  
+  let filteredEmps = employees;
+  if (activePayrollCompany !== 'Consolidated') {
+    filteredEmps = employees.filter(e => e.company === activePayrollCompany);
+  }
+  
+  if (filteredEmps.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding: 20px;">No employee records found.</td></tr>';
+    return;
+  }
+  
+  filteredEmps.forEach(emp => {
+    const struct = emp.salaryStructure || {
+      baseSalary: 0,
+      allowances: { travel: 0, housing: 0, mobile: 0 },
+      deductions: { taxPercent: 0, pensionPercent: 0, loanRepayment: 0 },
+      bankDetails: { bankName: '', iban: '', sortCode: '' }
+    };
+    
+    const base = struct.baseSalary;
+    const allowances = (struct.allowances.travel || 0) + (struct.allowances.housing || 0) + (struct.allowances.mobile || 0);
+    const gross = base + allowances;
+    const deductions = (base * ((struct.deductions.taxPercent || 0) + (struct.deductions.pensionPercent || 0)) / 100) + (struct.deductions.loanRepayment || 0);
+    const net = gross - deductions;
+    const bank = struct.bankDetails.bankName ? `${struct.bankDetails.bankName} (${struct.bankDetails.sortCode || ''})` : '<span class="text-muted">Not Set</span>';
+
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${emp.name}</strong></td>
+        <td><span style="font-size:11px; padding:3px 8px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">${emp.company}</span></td>
+        <td style="font-size:12px; color:var(--color-text-muted);">${emp.jobTitle}</td>
+        <td>£${base.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-cyan);">+£${allowances.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-red);">-£${deductions.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="font-weight:600; color:var(--accent-emerald);">£${net.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="font-size:11px; color:var(--color-text-muted);">${bank}</td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="openSalaryModal('${emp.id}')" style="padding: 4px 8px; font-size:11px;"><i class="fa-solid fa-pen-to-square"></i> Configure</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function renderPayrollRun() {
+  const currentMonthStr = systemStatus.simulatedDate ? systemStatus.simulatedDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
+  
+  // Set default run month if empty
+  const runMonthInput = document.getElementById('payroll-run-month');
+  if (!runMonthInput.value) {
+    runMonthInput.value = currentMonthStr;
+  }
+  
+  // If preview already loaded, show it, else hide preview container
+  if (currentPayrollPreview) {
+    showPayrollPreview();
+  } else {
+    document.getElementById('payroll-preview-container').style.display = 'none';
+  }
+}
+
+function handlePayrollCalculate(e) {
+  e.preventDefault();
+  
+  const month = document.getElementById('payroll-run-month').value;
+  const company = document.getElementById('payroll-run-company').value;
+  
+  if (!month || !company) return;
+  
+  // Check if an approved run already exists for this company & month
+  const duplicate = payrollRuns.some(r => r.month === month && r.company === company && r.status === 'Approved');
+  if (duplicate) {
+    showToast(`Approved payroll run already exists for ${company} for month ${month}.`, 'error');
+    return;
+  }
+  
+  // Filter active employees for this company
+  const compEmps = employees.filter(emp => emp.company === company && emp.status === 'Active');
+  if (compEmps.length === 0) {
+    showToast(`No active employees found for ${company}.`, 'error');
+    return;
+  }
+  
+  // Calculate records
+  let records = [];
+  let totalGross = 0;
+  let totalDeductions = 0;
+  let totalNet = 0;
+  
+  compEmps.forEach(emp => {
+    const struct = emp.salaryStructure || {
+      baseSalary: 3000.00,
+      allowances: { travel: 0, housing: 0, mobile: 0 },
+      deductions: { taxPercent: 15.0, pensionPercent: 5.0, loanRepayment: 0.0 },
+      bankDetails: { bankName: 'Standard Bank', iban: '', sortCode: '' }
+    };
+    
+    const base = struct.baseSalary;
+    const al = struct.allowances;
+    const de = struct.deductions;
+    const bank = struct.bankDetails;
+    
+    const travel = al.travel || 0;
+    const housing = al.housing || 0;
+    const mobile = al.mobile || 0;
+    
+    const gross = base + travel + housing + mobile;
+    
+    const tax = base * ((de.taxPercent || 0) / 100);
+    const pension = base * ((de.pensionPercent || 0) / 100);
+    const loan = de.loanRepayment || 0;
+    
+    const deduct = tax + pension + loan;
+    const net = gross - deduct;
+    
+    totalGross += gross;
+    totalDeductions += deduct;
+    totalNet += net;
+    
+    records.push({
+      employeeId: emp.id,
+      employeeName: emp.name,
+      jobTitle: emp.jobTitle,
+      baseSalary: base,
+      allowances: { travel, housing, mobile },
+      deductions: { tax, pension, loan },
+      grossPay: gross,
+      totalDeductions: deduct,
+      netPay: net,
+      bankName: bank.bankName || 'Standard Bank',
+      iban: bank.iban || '',
+      sortCode: bank.sortCode || '',
+      email: emp.email || '',
+      emailSent: false,
+      emailSentDate: null
+    });
+  });
+  
+  currentPayrollPreview = {
+    month,
+    company,
+    records,
+    totalGross,
+    totalDeductions,
+    totalNet
+  };
+  
+  showPayrollPreview();
+  showToast('Payroll previews calculated successfully.', 'success');
+}
+
+function showPayrollPreview() {
+  if (!currentPayrollPreview) return;
+  
+  const title = document.getElementById('payroll-preview-title');
+  title.innerHTML = `<i class="fa-solid fa-file-invoice-dollar text-purple"></i> Payroll Calculation Preview - <strong>${currentPayrollPreview.company}</strong> (${currentPayrollPreview.month})`;
+  
+  const tbody = document.getElementById('payroll-preview-body');
+  tbody.innerHTML = '';
+  
+  currentPayrollPreview.records.forEach(r => {
+    const alTotal = r.allowances.travel + r.allowances.housing + r.allowances.mobile;
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${r.employeeName}</strong><br><span style="font-size:10px; color:var(--color-text-muted);">${r.jobTitle}</span></td>
+        <td>£${r.baseSalary.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-cyan);">+£${alTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="font-weight:600;">£${r.grossPay.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td>£${r.deductions.tax.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td>£${r.deductions.pension.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td>£${r.deductions.loan.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-red); font-weight:600;">£${r.totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-emerald); font-weight:600; font-size:13px;">£${r.netPay.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+      </tr>
+    `;
+  });
+  
+  document.getElementById('preview-total-gross').textContent = `£${currentPayrollPreview.totalGross.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+  document.getElementById('preview-total-deductions').textContent = `£${currentPayrollPreview.totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+  document.getElementById('preview-total-net').textContent = `£${currentPayrollPreview.totalNet.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+  
+  document.getElementById('payroll-preview-container').style.display = 'block';
+}
+
+async function savePayrollRun() {
+  if (!currentPayrollPreview) return;
+  
+  // Disable button
+  const saveBtn = document.getElementById('btn-save-payroll-run');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving...';
+  
+  const res = await apiCall('/payroll/runs', 'POST', currentPayrollPreview);
+  
+  saveBtn.disabled = false;
+  saveBtn.innerHTML = '<i class="fa-solid fa-file-invoice-dollar"></i> Commit Draft Run';
+  
+  if (res) {
+    showToast(`Draft payroll run saved for ${currentPayrollPreview.company} (${currentPayrollPreview.month}).`, 'success');
+    currentPayrollPreview = null;
+    document.getElementById('payroll-preview-container').style.display = 'none';
+    
+    // Switch to history tab
+    await fetchPayrollRuns();
+    const historyTab = document.querySelector('.payroll-tab-btn[data-payroll-tab="history"]');
+    if (historyTab) historyTab.click();
+  }
+}
+
+function renderPayrollHistory() {
+  const tbody = document.getElementById('payroll-history-registry-body');
+  tbody.innerHTML = '';
+  
+  let filteredRuns = payrollRuns;
+  if (activePayrollCompany !== 'Consolidated') {
+    filteredRuns = payrollRuns.filter(r => r.company === activePayrollCompany);
+  }
+  
+  // Sort runs by month desc
+  filteredRuns.sort((a,b) => b.month.localeCompare(a.month));
+  
+  if (filteredRuns.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding: 20px;">No payroll runs archived.</td></tr>';
+    return;
+  }
+  
+  filteredRuns.forEach(r => {
+    const isApproved = r.status === 'Approved';
+    const statusBadge = isApproved 
+      ? '<span class="status-indicator active" style="padding:3px 8px; border-radius:12px; font-size:10px;">Approved</span>'
+      : '<span class="status-indicator simulated" style="padding:3px 8px; border-radius:12px; font-size:10px; background:rgba(245, 158, 11, 0.15); border:1px solid rgba(245, 158, 11, 0.3); color:#f59e0b;">Draft</span>';
+      
+    let actionsHtml = '';
+    if (isApproved) {
+      actionsHtml = `<button class="btn btn-secondary btn-sm" onclick="openPayrollDetailsModal('${r.id}')" style="padding:4px 8px; font-size:11px;"><i class="fa-solid fa-eye"></i> View Details</button>`;
+    } else {
+      actionsHtml = `
+        <button class="btn btn-accent btn-sm" onclick="approvePayrollRun('${r.id}')" style="padding:4px 8px; font-size:11px;"><i class="fa-solid fa-circle-check"></i> Approve</button>
+        <button class="btn btn-secondary btn-sm" onclick="deletePayrollRun('${r.id}')" style="padding:4px 8px; font-size:11px; background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.2); color:#ef4444;"><i class="fa-solid fa-trash"></i> Delete</button>
+      `;
+    }
+
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${r.id}</strong></td>
+        <td>${r.month}</td>
+        <td><span style="font-size:11px; padding:3px 8px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">${r.company}</span></td>
+        <td>${statusBadge}</td>
+        <td style="font-size:11px; color:var(--color-text-muted);">${r.processedDate}</td>
+        <td>£${r.totalGross.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-red);">-£${r.totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="font-weight:600; color:var(--accent-emerald);">£${r.totalNet.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td>
+          <div style="display:flex; gap:5px;">
+            ${actionsHtml}
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+async function approvePayrollRun(runId) {
+  if (confirm(`Are you sure you want to approve payroll run ${runId}? This will finalize payouts and log double-entry general ledger records in Accounting.`)) {
+    const res = await apiCall(`/payroll/runs/${runId}/approve`, 'POST');
+    if (res) {
+      showToast('Payroll run approved and journaled successfully.', 'success');
+      await fetchPayrollRuns();
+      await fetchJournals(); // Refresh ledger journal entries
+      renderPayrollSubTab();
+    }
+  }
+}
+
+async function deletePayrollRun(runId) {
+  if (confirm(`Are you sure you want to delete draft payroll run ${runId}? This action cannot be undone.`)) {
+    const res = await apiCall(`/payroll/runs/${runId}`, 'DELETE');
+    if (res) {
+      showToast('Draft payroll run deleted.', 'warning');
+      await fetchPayrollRuns();
+      renderPayrollSubTab();
+    }
+  }
+}
+
+// Salary Structure Modal controller
+function openSalaryModal(empId) {
+  const emp = employees.find(e => e.id === empId);
+  if (!emp) return;
+  
+  document.getElementById('salary-emp-id').value = empId;
+  document.getElementById('salary-modal-title').innerHTML = `<i class="fa-solid fa-sack-dollar text-cyan"></i> Salary Profile: <strong>${emp.name}</strong>`;
+  
+  const struct = emp.salaryStructure || {
+    baseSalary: 3000.00,
+    allowances: { travel: 0, housing: 0, mobile: 0 },
+    deductions: { taxPercent: 15.0, pensionPercent: 5.0, loanRepayment: 0.0 },
+    bankDetails: { bankName: '', iban: '', sortCode: '' }
+  };
+  
+  document.getElementById('salary-base').value = struct.baseSalary;
+  document.getElementById('salary-travel').value = struct.allowances.travel || 0;
+  document.getElementById('salary-housing').value = struct.allowances.housing || 0;
+  document.getElementById('salary-mobile').value = struct.allowances.mobile || 0;
+  
+  document.getElementById('salary-tax').value = struct.deductions.taxPercent;
+  document.getElementById('salary-pension').value = struct.deductions.pensionPercent;
+  document.getElementById('salary-loan').value = struct.deductions.loanRepayment || 0;
+  
+  document.getElementById('salary-bank').value = struct.bankDetails.bankName || '';
+  document.getElementById('salary-iban').value = struct.bankDetails.iban || '';
+  document.getElementById('salary-sort').value = struct.bankDetails.sortCode || '';
+  
+  document.getElementById('salary-structure-modal').style.display = 'flex';
+}
+
+function closeSalaryModal() {
+  document.getElementById('salary-structure-modal').style.display = 'none';
+}
+
+async function handleSalarySubmit(e) {
+  e.preventDefault();
+  
+  const empId = document.getElementById('salary-emp-id').value;
+  
+  const body = {
+    baseSalary: parseFloat(document.getElementById('salary-base').value || 0),
+    allowances: {
+      travel: parseFloat(document.getElementById('salary-travel').value || 0),
+      housing: parseFloat(document.getElementById('salary-housing').value || 0),
+      mobile: parseFloat(document.getElementById('salary-mobile').value || 0)
+    },
+    deductions: {
+      taxPercent: parseFloat(document.getElementById('salary-tax').value || 0),
+      pensionPercent: parseFloat(document.getElementById('salary-pension').value || 0),
+      loanRepayment: parseFloat(document.getElementById('salary-loan').value || 0)
+    },
+    bankDetails: {
+      bankName: document.getElementById('salary-bank').value,
+      iban: document.getElementById('salary-iban').value,
+      sortCode: document.getElementById('salary-sort').value
+    }
+  };
+  
+  const res = await apiCall(`/employees/${empId}/salary-structure`, 'PUT', body);
+  if (res) {
+    showToast('Employee salary structure updated successfully.', 'success');
+    closeSalaryModal();
+    
+    // Refresh employee registry state
+    await fetchEmployees();
+    renderPayrollSalary();
+  }
+}
+
+// Payroll Details Modal
+function openPayrollDetailsModal(runId) {
+  const run = payrollRuns.find(r => r.id === runId);
+  if (!run) return;
+  
+  document.getElementById('payroll-details-company').textContent = run.company;
+  document.getElementById('payroll-details-month').textContent = run.month;
+  document.getElementById('payroll-details-date').textContent = run.processedDate;
+  
+  const statusBadge = document.getElementById('payroll-details-status-badge');
+  const isApproved = run.status === 'Approved';
+  statusBadge.innerHTML = isApproved 
+    ? '<span class="status-indicator active" style="padding:3px 8px; border-radius:12px; font-size:10px;">Approved</span>'
+    : '<span class="status-indicator simulated" style="padding:3px 8px; border-radius:12px; font-size:10px; background:rgba(245, 158, 11, 0.15); border:1px solid rgba(245, 158, 11, 0.3); color:#f59e0b;">Draft</span>';
+
+  const tbody = document.getElementById('payroll-details-records-body');
+  tbody.innerHTML = '';
+  
+  run.records.forEach(rec => {
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${rec.employeeName}</strong><br><span style="font-size:10px; color:var(--color-text-muted);">${rec.jobTitle}</span></td>
+        <td>£${rec.grossPay.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td>£${rec.deductions.tax.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td>£${rec.deductions.pension.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td>£${rec.deductions.loan.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-red);">£${rec.totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-emerald); font-weight:600;">£${rec.netPay.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="openPayslipModal('${run.id}', '${rec.employeeId}')" style="padding:3px 6px; font-size:10px;"><i class="fa-solid fa-receipt"></i> View Payslip</button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  document.getElementById('payroll-details-sum-gross').textContent = `£${run.totalGross.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+  document.getElementById('payroll-details-sum-deductions').textContent = `£${run.totalDeductions.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+  document.getElementById('payroll-details-sum-net').textContent = `£${run.totalNet.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+  
+  // Set data attributes on actions
+  document.getElementById('btn-payroll-export-bank').setAttribute('data-run-id', runId);
+  document.getElementById('btn-payroll-distribute-emails').setAttribute('data-run-id', runId);
+  
+  document.getElementById('payroll-details-modal').style.display = 'flex';
+}
+
+function closePayrollDetailsModal() {
+  document.getElementById('payroll-details-modal').style.display = 'none';
+}
+
+function exportBankCSV(runId) {
+  const run = payrollRuns.find(r => r.id === runId);
+  if (!run) return;
+  
+  let csv = 'Employee ID,Employee Name,Bank Name,IBAN,Sort Code,Net Salary,Currency\n';
+  run.records.forEach(rec => {
+    csv += `"${rec.employeeId}","${rec.employeeName}","${rec.bankName}","${rec.iban}","${rec.sortCode}",${rec.netPay},"GBP"\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `bank_transfer_${run.company.replace(/\s+/g, '_')}_${run.month}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  showToast('Bank transfer CSV instructions exported.', 'success');
+}
+
+function distributePayslipEmails(runId) {
+  const run = payrollRuns.find(r => r.id === runId);
+  if (!run) return;
+  
+  showToast('Distributing payslips to employee mailbox accounts...', 'info');
+  
+  // Simulate SMTP emailing by firing toasts and pushing notification alerts
+  setTimeout(() => {
+    showToast(`Successfully emailed ${run.records.length} payslips to respective employee mail accounts.`, 'success');
+    
+    // Add logs
+    run.records.forEach(rec => {
+      // Simulate adding custom log or activity
+      const logMsg = `Simulated SMTP: Sent monthly payslip for ${run.month} to ${rec.employeeName} (${rec.email})`;
+      console.log(logMsg);
+    });
+  }, 1000);
+}
+
+// Individual Payslip print
+function openPayslipModal(runId, employeeId) {
+  const run = payrollRuns.find(r => r.id === runId);
+  if (!run) return;
+  
+  const rec = run.records.find(r => r.employeeId === employeeId);
+  if (!rec) return;
+  
+  document.getElementById('payslip-header-company').textContent = run.company;
+  document.getElementById('payslip-info-month').textContent = run.month;
+  
+  document.getElementById('payslip-emp-name').textContent = rec.employeeName;
+  document.getElementById('payslip-emp-title').textContent = rec.jobTitle;
+  document.getElementById('payslip-emp-id').textContent = `ID: ${rec.employeeId}`;
+  
+  document.getElementById('payslip-bank-name').textContent = rec.bankName;
+  document.getElementById('payslip-bank-iban').textContent = rec.iban || 'N/A';
+  document.getElementById('payslip-bank-sort').textContent = rec.sortCode || 'N/A';
+  
+  const tbody = document.getElementById('payslip-table-body');
+  tbody.innerHTML = `
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+      <td style="padding: 10px 0;">Basic Salary</td>
+      <td style="padding: 10px 0; text-align: right;">£${rec.baseSalary.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+      <td style="padding: 10px 0; text-align: right;">-</td>
+    </tr>
+  `;
+  
+  if (rec.allowances.travel > 0) {
+    tbody.innerHTML += `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding: 10px 0;">Travel Allowance</td>
+        <td style="padding: 10px 0; text-align: right;">£${rec.allowances.travel.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="padding: 10px 0; text-align: right;">-</td>
+      </tr>
+    `;
+  }
+  
+  if (rec.allowances.housing > 0) {
+    tbody.innerHTML += `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding: 10px 0;">Housing Allowance</td>
+        <td style="padding: 10px 0; text-align: right;">£${rec.allowances.housing.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="padding: 10px 0; text-align: right;">-</td>
+      </tr>
+    `;
+  }
+  
+  if (rec.allowances.mobile > 0) {
+    tbody.innerHTML += `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding: 10px 0;">Mobile Allowance</td>
+        <td style="padding: 10px 0; text-align: right;">£${rec.allowances.mobile.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="padding: 10px 0; text-align: right;">-</td>
+      </tr>
+    `;
+  }
+  
+  if (rec.deductions.tax > 0) {
+    tbody.innerHTML += `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding: 10px 0;">Income Tax Witheld</td>
+        <td style="padding: 10px 0; text-align: right;">-</td>
+        <td style="padding: 10px 0; text-align: right; color:var(--accent-red);">-£${rec.deductions.tax.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+      </tr>
+    `;
+  }
+  
+  if (rec.deductions.pension > 0) {
+    tbody.innerHTML += `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding: 10px 0;">Pension Contributions</td>
+        <td style="padding: 10px 0; text-align: right;">-</td>
+        <td style="padding: 10px 0; text-align: right; color:var(--accent-red);">-£${rec.deductions.pension.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+      </tr>
+    `;
+  }
+  
+  if (rec.deductions.loan > 0) {
+    tbody.innerHTML += `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding: 10px 0;">Loan Repayment Deduction</td>
+        <td style="padding: 10px 0; text-align: right;">-</td>
+        <td style="padding: 10px 0; text-align: right; color:var(--accent-red);">-£${rec.deductions.loan.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+      </tr>
+    `;
+  }
+  
+  const alTotal = rec.allowances.travel + rec.allowances.housing + rec.allowances.mobile;
+  document.getElementById('payslip-summary-gross').textContent = `£${rec.grossPay.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+  document.getElementById('payslip-summary-deduct').textContent = `£${rec.totalDeductions.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+  document.getElementById('payslip-summary-net').textContent = `£${rec.netPay.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+  
+  document.getElementById('payslip-modal').style.display = 'flex';
+}
+
+function closePayslipModal() {
+  document.getElementById('payslip-modal').style.display = 'none';
+}
+
+function printPayslip() {
+  const content = document.getElementById('payslip-printable-content').innerHTML;
+  const printWindow = window.open('', '', 'height=650,width=800');
+  
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Employee Payslip</title>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+        <style>
+          body {
+            font-family: 'Outfit', sans-serif;
+            background: #ffffff;
+            color: #000000;
+            padding: 40px;
+            box-sizing: border-box;
+          }
+          /* Custom overrides for printing */
+          h3, h4, p, th, td, div, span { color: #000000 !important; }
+          #payslip-printable-content { width: 100%; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { border-bottom: 2px solid #000; padding: 10px 0; text-align: left; }
+          td { border-bottom: 1px solid #ddd; padding: 10px 0; }
+          .text-right { text-align: right; }
+          @media print {
+            body { padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        ${content}
+        <script>
+          window.onload = function() {
+            window.print();
+            setTimeout(function() { window.close(); }, 500);
+          }
+        </script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
+// Reports panels controller
+function renderPayrollReports() {
+  if (activePayrollReport === 'summary') {
+    renderPayrollReportSummary();
+  } else if (activePayrollReport === 'payslip') {
+    renderPayrollReportPayslips();
+  } else if (activePayrollReport === 'tax') {
+    renderPayrollReportTax();
+  } else if (activePayrollReport === 'dept') {
+    renderPayrollReportDept();
+  }
+}
+
+function renderPayrollReportSummary() {
+  // Update select runs
+  const runSelect = document.getElementById('payroll-report-summary-run');
+  const previousVal = runSelect.value;
+  runSelect.innerHTML = '';
+  
+  const approvedRuns = payrollRuns.filter(r => r.status === 'Approved');
+  
+  if (approvedRuns.length === 0) {
+    runSelect.innerHTML = '<option value="">No approved runs available</option>';
+    document.getElementById('payroll-report-summary-body').innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding:20px;">No approved payroll data.</td></tr>';
+    return;
+  }
+  
+  approvedRuns.forEach(r => {
+    runSelect.innerHTML += `<option value="${r.id}">${r.month} - ${r.company}</option>`;
+  });
+  
+  if (previousVal && approvedRuns.some(r => r.id === previousVal)) {
+    runSelect.value = previousVal;
+  }
+  
+  const selectedRunId = runSelect.value;
+  const run = approvedRuns.find(r => r.id === selectedRunId);
+  const tbody = document.getElementById('payroll-report-summary-body');
+  tbody.innerHTML = '';
+  
+  if (!run) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding:20px;">Select a run from the dropdown above.</td></tr>';
+    return;
+  }
+  
+  run.records.forEach(rec => {
+    const alTotal = rec.allowances.travel + rec.allowances.housing + rec.allowances.mobile;
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${rec.employeeName}</strong><br><span style="font-size:10px; color:var(--color-text-muted);">${rec.jobTitle}</span></td>
+        <td>£${rec.baseSalary.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-cyan);">+£${alTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="font-weight:600;">£${rec.grossPay.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td>£${rec.deductions.tax.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td>£${rec.deductions.pension.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td>£${rec.deductions.loan.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-red); font-weight:600;">-£${rec.totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-emerald); font-weight:600;">£${rec.netPay.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+      </tr>
+    `;
+  });
+}
+
+function renderPayrollReportPayslips() {
+  const empSelect = document.getElementById('payroll-report-payslip-emp');
+  const previousVal = empSelect.value;
+  empSelect.innerHTML = '';
+  
+  if (employees.length === 0) {
+    empSelect.innerHTML = '<option value="">No employees registered</option>';
+    document.getElementById('payroll-report-payslip-body').innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:20px;">No employees.</td></tr>';
+    return;
+  }
+  
+  employees.forEach(e => {
+    empSelect.innerHTML += `<option value="${e.id}">${e.name} (${e.company})</option>`;
+  });
+  
+  if (previousVal && employees.some(e => e.id === previousVal)) {
+    empSelect.value = previousVal;
+  }
+  
+  const empId = empSelect.value;
+  const tbody = document.getElementById('payroll-report-payslip-body');
+  tbody.innerHTML = '';
+  
+  if (!empId) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:20px;">Select an employee from the dropdown above.</td></tr>';
+    return;
+  }
+  
+  // Find all payslip records for this employee from approved payroll runs
+  const approvedRuns = payrollRuns.filter(r => r.status === 'Approved');
+  let recordsFound = [];
+  
+  approvedRuns.forEach(run => {
+    const rec = run.records.find(r => r.employeeId === empId);
+    if (rec) {
+      recordsFound.push({
+        runId: run.id,
+        month: run.month,
+        company: run.company,
+        rec
+      });
+    }
+  });
+  
+  // Sort by month desc
+  recordsFound.sort((a,b) => b.month.localeCompare(a.month));
+  
+  if (recordsFound.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:20px;">No payslips archived for this employee.</td></tr>';
+    return;
+  }
+  
+  recordsFound.forEach(item => {
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${item.month}</strong></td>
+        <td><span style="font-size:11px; padding:3px 8px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">${item.company}</span></td>
+        <td style="font-size:12px; color:var(--color-text-muted);">${item.rec.jobTitle}</td>
+        <td>£${item.rec.grossPay.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-red);">-£${item.rec.totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="font-weight:600; color:var(--accent-emerald);">£${item.rec.netPay.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td><span class="status-indicator active" style="padding:3px 8px; border-radius:12px; font-size:10px;">Processed</span></td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="openPayslipModal('${item.runId}', '${empId}')" style="padding: 4px 8px; font-size: 11px;"><i class="fa-solid fa-receipt"></i> Print View</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function renderPayrollReportTax() {
+  const year = document.getElementById('payroll-report-tax-year').value || '2026';
+  const tbody = document.getElementById('payroll-report-tax-body');
+  tbody.innerHTML = '';
+  
+  const approvedRuns = payrollRuns.filter(r => r.status === 'Approved' && r.month.startsWith(year));
+  
+  if (approvedRuns.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">No approved runs recorded in year ' + year + '.</td></tr>';
+    return;
+  }
+  
+  // Aggregate stats per employee
+  let aggregates = {};
+  approvedRuns.forEach(run => {
+    run.records.forEach(rec => {
+      if (!aggregates[rec.employeeId]) {
+        aggregates[rec.employeeId] = {
+          name: rec.employeeName,
+          company: run.company,
+          gross: 0,
+          tax: 0,
+          pension: 0,
+          net: 0
+        };
+      }
+      aggregates[rec.employeeId].gross += rec.grossPay;
+      aggregates[rec.employeeId].tax += rec.deductions.tax;
+      aggregates[rec.employeeId].pension += rec.deductions.pension;
+      aggregates[rec.employeeId].net += rec.netPay;
+    });
+  });
+  
+  Object.values(aggregates).forEach(item => {
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${item.name}</strong></td>
+        <td><span style="font-size:11px; padding:3px 8px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">${item.company}</span></td>
+        <td>£${item.gross.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-red);">£${item.tax.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--accent-cyan);">£${item.pension.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td style="font-weight:600; color:var(--accent-emerald);">£${item.net.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+      </tr>
+    `;
+  });
+}
+
+function renderPayrollReportDept() {
+  const currentMonthStr = systemStatus.simulatedDate ? systemStatus.simulatedDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
+  
+  const approvedRuns = payrollRuns.filter(r => r.status === 'Approved' && r.month === currentMonthStr);
+  
+  let devsDepts = {};
+  let itDepts = {};
+  
+  approvedRuns.forEach(run => {
+    run.records.forEach(rec => {
+      // Find employee's department
+      const emp = employees.find(e => e.id === rec.employeeId);
+      const dept = emp ? emp.department : 'General';
+      
+      if (run.company === 'Pearls Developers Limited') {
+        devsDepts[dept] = (devsDepts[dept] || 0) + rec.netPay;
+      } else {
+        itDepts[dept] = (itDepts[dept] || 0) + rec.netPay;
+      }
+    });
+  });
+  
+  const renderList = (listEl, deptsObj) => {
+    listEl.innerHTML = '';
+    const entries = Object.entries(deptsObj);
+    
+    if (entries.length === 0) {
+      listEl.innerHTML = '<div class="text-center text-muted" style="padding:20px;">No payout data this month.</div>';
+      return;
+    }
+    
+    // Find max value to calibrate percentage widths
+    const maxVal = Math.max(...entries.map(e => e[1]));
+    const totalVal = entries.reduce((acc, curr) => acc + curr[1], 0);
+    
+    entries.forEach(([dept, net]) => {
+      const pctWidth = maxVal > 0 ? Math.round((net / maxVal) * 100) : 0;
+      const pctTotal = totalVal > 0 ? Math.round((net / totalVal) * 100) : 0;
+      
+      listEl.innerHTML += `
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 5px;">
+            <span>${dept} (${pctTotal}%)</span>
+            <span style="color:var(--accent-cyan);">£${net.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+          </div>
+          <div style="background: rgba(255,255,255,0.04); height: 8px; border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.03);">
+            <div style="background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple)); width: ${pctWidth}%; height: 100%; border-radius: 4px; transition: width 0.5s ease;"></div>
+          </div>
+        </div>
+      `;
+    });
+  };
+  
+  renderList(document.getElementById('payroll-dept-list-devs'), devsDepts);
+  renderList(document.getElementById('payroll-dept-list-it'), itDepts);
+}
+
+// Expose handlers to window
+window.openSalaryModal = openSalaryModal;
+window.closeSalaryModal = closeSalaryModal;
+window.openPayrollDetailsModal = openPayrollDetailsModal;
+window.closePayrollDetailsModal = closePayrollDetailsModal;
+window.approvePayrollRun = approvePayrollRun;
+window.deletePayrollRun = deletePayrollRun;
+window.openPayslipModal = openPayslipModal;
+window.closePayslipModal = closePayslipModal;
+window.calculateAndRenderPayrollMetrics = calculateAndRenderPayrollMetrics;
+window.renderPayrollSubTab = renderPayrollSubTab;
+window.setupPayrollEventListeners = setupPayrollEventListeners;
+window.fetchPayrollRuns = fetchPayrollRuns;

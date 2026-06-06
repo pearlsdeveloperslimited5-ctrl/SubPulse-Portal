@@ -353,6 +353,18 @@
       "name": "General & Admin Expense",
       "type": "Expense",
       "company": "All"
+    },
+    {
+      "code": "7000",
+      "name": "Staff Wages Expense",
+      "type": "Expense",
+      "company": "All"
+    },
+    {
+      "code": "2100",
+      "name": "Staff Wages Payable",
+      "type": "Liability",
+      "company": "All"
     }
   ],
   "invoices": [],
@@ -406,7 +418,25 @@
           "uploadDate": "2025-03-01"
         }
       ],
-      "disciplinaryRecords": []
+      "disciplinaryRecords": [],
+      "salaryStructure": {
+        "baseSalary": 5500,
+        "allowances": {
+          "travel": 150,
+          "housing": 300,
+          "mobile": 50
+        },
+        "deductions": {
+          "taxPercent": 20,
+          "pensionPercent": 5,
+          "loanRepayment": 0
+        },
+        "bankDetails": {
+          "bankName": "Barclays Bank",
+          "iban": "GB82BARC20202012345678",
+          "sortCode": "20-20-20"
+        }
+      }
     },
     {
       "id": "EMP-103",
@@ -425,7 +455,25 @@
         "parental": 5
       },
       "documents": [],
-      "disciplinaryRecords": []
+      "disciplinaryRecords": [],
+      "salaryStructure": {
+        "baseSalary": 3200,
+        "allowances": {
+          "travel": 100,
+          "housing": 200,
+          "mobile": 50
+        },
+        "deductions": {
+          "taxPercent": 15,
+          "pensionPercent": 5,
+          "loanRepayment": 100
+        },
+        "bankDetails": {
+          "bankName": "HSBC Bank",
+          "iban": "GB45HSBC40404098765432",
+          "sortCode": "40-40-40"
+        }
+      }
     },
     {
       "id": "EMP-104",
@@ -450,7 +498,25 @@
           "uploadDate": "2024-12-10"
         }
       ],
-      "disciplinaryRecords": []
+      "disciplinaryRecords": [],
+      "salaryStructure": {
+        "baseSalary": 4200,
+        "allowances": {
+          "travel": 150,
+          "housing": 300,
+          "mobile": 50
+        },
+        "deductions": {
+          "taxPercent": 20,
+          "pensionPercent": 5,
+          "loanRepayment": 0
+        },
+        "bankDetails": {
+          "bankName": "Lloyds Bank",
+          "iban": "GB91LOYD30303011223344",
+          "sortCode": "30-30-30"
+        }
+      }
     },
     {
       "id": "EMP-105",
@@ -469,7 +535,25 @@
         "parental": 5
       },
       "documents": [],
-      "disciplinaryRecords": []
+      "disciplinaryRecords": [],
+      "salaryStructure": {
+        "baseSalary": 2900,
+        "allowances": {
+          "travel": 100,
+          "housing": 200,
+          "mobile": 50
+        },
+        "deductions": {
+          "taxPercent": 15,
+          "pensionPercent": 5,
+          "loanRepayment": 0
+        },
+        "bankDetails": {
+          "bankName": "NatWest Bank",
+          "iban": "GB12NWBK60606055443322",
+          "sortCode": "60-60-60"
+        }
+      }
     }
   ],
   "leaves": [
@@ -883,18 +967,61 @@
       "lesseePhone": "+44 7911 123456",
       "startDate": "2026-01-01",
       "endDate": "2026-07-01",
-      "monthlyRate": 350.00,
-      "securityDeposit": 500.00,
+      "monthlyRate": 350,
+      "securityDeposit": 500,
       "status": "Active",
       "paymentSchedule": [
-        { "id": "PAY-1001-1", "dueDate": "2026-01-01", "amount": 350.00, "status": "Paid", "paymentDate": "2026-01-02" },
-        { "id": "PAY-1001-2", "dueDate": "2026-02-01", "amount": 350.00, "status": "Paid", "paymentDate": "2026-02-01" },
-        { "id": "PAY-1001-3", "dueDate": "2026-03-01", "amount": 350.00, "status": "Paid", "paymentDate": "2026-03-03" },
-        { "id": "PAY-1001-4", "dueDate": "2026-04-01", "amount": 350.00, "status": "Paid", "paymentDate": "2026-04-01" },
-        { "id": "PAY-1001-5", "dueDate": "2026-05-01", "amount": 350.00, "status": "Paid", "paymentDate": "2026-05-02" },
-        { "id": "PAY-1001-6", "dueDate": "2026-06-01", "amount": 350.00, "status": "Pending", "paymentDate": null },
-        { "id": "PAY-1001-7", "dueDate": "2026-07-01", "amount": 350.00, "status": "Pending", "paymentDate": null }
+        {
+          "id": "PAY-1001-1",
+          "dueDate": "2026-01-01",
+          "amount": 350,
+          "status": "Paid",
+          "paymentDate": "2026-01-02"
+        },
+        {
+          "id": "PAY-1001-2",
+          "dueDate": "2026-02-01",
+          "amount": 350,
+          "status": "Paid",
+          "paymentDate": "2026-02-01"
+        },
+        {
+          "id": "PAY-1001-3",
+          "dueDate": "2026-03-01",
+          "amount": 350,
+          "status": "Paid",
+          "paymentDate": "2026-03-03"
+        },
+        {
+          "id": "PAY-1001-4",
+          "dueDate": "2026-04-01",
+          "amount": 350,
+          "status": "Paid",
+          "paymentDate": "2026-04-01"
+        },
+        {
+          "id": "PAY-1001-5",
+          "dueDate": "2026-05-01",
+          "amount": 350,
+          "status": "Paid",
+          "paymentDate": "2026-05-02"
+        },
+        {
+          "id": "PAY-1001-6",
+          "dueDate": "2026-06-01",
+          "amount": 350,
+          "status": "Pending",
+          "paymentDate": null
+        },
+        {
+          "id": "PAY-1001-7",
+          "dueDate": "2026-07-01",
+          "amount": 350,
+          "status": "Pending",
+          "paymentDate": null
+        }
       ]
     }
-  ]
+  ],
+  "payroll_runs": []
 }
